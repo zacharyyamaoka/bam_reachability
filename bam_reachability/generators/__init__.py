@@ -1,1 +1,1 @@
-from bam_reachability.generators.basic_shapes import rectangular_generator, spherical_generator, donut_generator
+from bam_reachability.generators.basic_shape_generators import rectangular_generator, spherical_generator, donut_generator
