@@ -11,7 +11,7 @@ reachability = ReachabilityMap.load(file_path)
 print("Frames: ", reachability.frames.shape)
 print("Map: ", len(reachability.map))
 
-points, colors = reachability.colorize(histogram=False)
+points, colors = reachability.colorize(histogram=True)
 print(points.shape, colors.shape)
 step = 0.1
 slicer = AlignedSlicer(points, step, colors, hide_alpha=True)

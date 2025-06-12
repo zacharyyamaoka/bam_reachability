@@ -184,6 +184,10 @@ class ReachabilityMap():
             axes[0].set_xlabel("Score")
             axes[0].set_ylabel("Count")
 
+            # Add bin edge ticks
+            axes[0].set_xticks(raw_bins)
+            axes[0].set_xticklabels([f"{edge:.2f}" for edge in raw_bins], rotation=45, ha='right')
+
             # Add counts above bars
             for x, count in zip(raw_bins[:-1], raw_counts):
                 if count > 0:
