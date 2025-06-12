@@ -40,13 +40,32 @@ def visualize_points(points: np.ndarray, axis_length=0.1):
     frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=axis_length)
     o3d.visualization.draw_geometries([pcd, frame])
 
+
+def visualize_convex_hull(points: np.ndarray, axis_length=0.1):
+    """
+    Visualize the convex hull of a set of 3D points.
+    """
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points)
+    hull, _ = pcd.compute_convex_hull()
+    hull = hull.simplify_quadric_decimation(target_number_of_triangles=100)
+    hull_ls = o3d.geometry.LineSet.create_from_triangle_mesh(hull)
+    hull_ls.paint_uniform_color([1.0, 0.0, 0.0])  # Red lines for hull
+    frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=axis_length)
+    o3d.visualization.draw_geometries([pcd, hull_ls, frame])
+    hull.compute_vertex_normals()
+    o3d.io.write_triangle_mesh("convex_hull.stl", hull)
+
+
 # Example usage:
 if __name__ == "__main__":
     sphere = spherical_generator(diameter=1.0, step=0.05)
-    visualize_points(sphere)
+    # visualize_points(sphere)
+    visualize_convex_hull(sphere)
 
-    donut = donut_generator(inner_diameter=0.4, outer_diameter=1.0, step=0.05)
-    visualize_points(donut)
+    # donut = donut_generator(inner_diameter=0.4, outer_diameter=1.0, step=0.05)
+    # visualize_points(donut)
 
-    rect = rectangular_generator(scale=(0.5, 0.5, 0.5), step=0.05)
-    visualize_points(rect)
+    # rect = rectangular_generator(scale=(0.5, 0.5, 0.5), step=0.05)
+    # visualize_points(rect)
+

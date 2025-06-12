@@ -1,4 +1,35 @@
 
+# TODO
+
+- Run Tests on each robot
+- Save result
+- Load result
+- Vizualise results for
+    - reach at least one point
+    - reach in between...
+    - reach with all points
+    - Given a z direction
+        - for hemisphere and 4 dof workspace
+
+- Save Meshes for, reach and dexterous, 
+- Save meshes for hemisphere, and 4 Dof workspace (given a z direction, by default is baselink z direction)
+- Save negative pointcloud for poitns that are outside of the meshes
+
+- Create Table generator
+- Ability to save TF between baselink and "table_Frame" to human editable YAML
+- Ability to set height, and +x,-x, +y,-y extents (assuming that Z is point upwards)
+- Ability to run a script that will then generate points inside of that grid 
+    - Run result agian, and then generate 
+    - Another option would be to mask the full workspace... both are about similar, this one is cool beacuse you get poitns aligned with workspcae though
+
+- Create ros node that at start up publishes the meshes and pointclouds, so that they can be easily view.
+- just comment out the lines to turn of publishing of certain things if you want. 
+
+- What is the maximum workspace that I can reach (give me an idea of where I could drop things off in bins)
+- What is the dexterous workspace, with 6 DOF range of motion? (give me an idea of where I can turn an object to view the camera)
+- What is the hemisphere workspace? (give me an idea of where I can do complete pick and place on a table)
+- What is the 4 DOF workspace? (keep arm point vertical from table)
+- What are the rectangular workspaces? (width and height)
 
 # Installation
 
@@ -34,6 +65,25 @@ https://github.com/compas-dev/compas_fab/blob/main/src/compas_fab/robots/reachab
 - It is faster to just compute it for all the orientations once, relative to the robot base_frame and then keep thoose points
 
 
+
+- Create a ROS2 node that at start up
+- Publsihes the workspaces etc. for the points...
+
+I could use shapes.. or I could use convex hull meshes...
+https://github.com/auctus-team/pycapacity
+
+Ok that actually would work and foxglove has a wayt to vizualise it with opacity....
+
+I would need to generate the workspace, export the stls.. and then I can publish them. another option would be to send it live..
+
+Let me do a quick test to see if I can viz a convex hull in rviz?
+
+yes....
+
+### Notes
+
+- I am happy with the speed it took to develop this. By copying pasting alot of the code, and using it as base line. Its like having
+a really great seed for the trial and error optimization. It saves so much time! No need to reinveint the wheel. Its this nice balance...
 
 
 Ok what is the fastest way for me to do this?

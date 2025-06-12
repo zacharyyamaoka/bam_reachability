@@ -28,7 +28,7 @@ def orthogonal_vector(v):
     return normalize(np.cross(v, [0, 0, 1]))
 
 
-def generate_deviation_vectors(axis, max_angle_rad, step_angle_rad):
+def generate_deviation_vectors(axis=[0,0,1], max_angle_rad=np.deg2rad(180), step_angle_rad=np.deg2rad(15)):
     """
     Generate unit vectors that deviate from the given axis direction
     by up to max_angle_rad, in step_angle_rad increments.
@@ -124,12 +124,13 @@ def mask_vectors_by_angle(vectors, target_vector, max_angle_rad):
 if __name__ == "__main__":
     vectors = generate_deviation_vectors(
         axis=(-1, 0, 0),  # z-axis
-        max_angle_rad=np.deg2rad(180),  # 90 degree cone
-        step_angle_rad=np.deg2rad(15)
+        max_angle_rad=np.deg2rad(90),  # 90 degree cone
+        step_angle_rad=np.deg2rad(30)
     )
+    visualize_vectors(vectors)
     print(vectors.shape)
 
-    mask = mask_vectors_by_angle(vectors, [0,0,1], np.deg2rad(90) )
+    mask = mask_vectors_by_angle(vectors, [0,0,1], np.deg2rad(45) )
     print(mask.shape)
     print(np.sum(mask))
     visualize_vectors(vectors[mask])
