@@ -17,77 +17,265 @@ class ReachabilityMap():
                  frames: np.ndarray,
                  orientations: np.ndarray,
                  IK, # function
-                 FK=None, # function
+                 FK, # function
                  ):
 
         assert frames.ndim == 2 and frames.shape[1] == 3  # shape: (N, 3)
         self.frames = frames 
         self.orientations = orientations
-        self.map = []
+
+        self.n_frames = self.frames.shape[0]
+        self.n_orientations = self.orientations.shape[0]
+        self.total_count = self.n_frames * self.n_orientations
+
+
+        self.ik_map = []
+        self.fk_map = []
 
         self.IK = IK
         self.FK = FK
+        
+        self.calculate_ik_fk_map()
 
-        self.check_fk_ik_consitency = FK is not None
 
-        self.calculate()
+    def new_ik_info(self) -> dict:
+        ik_info = {
+            "ik_sols":[None] * self.n_orientations,
+            "success":[0] * self.n_orientations, # by default it's failed
+            }
+        return ik_info
 
-    def calculate(self):
+    def new_fk_info(self) -> dict:
+        fk_info = {
+            "fk_sols":[None] * self.n_orientations,
+            "consistent":[1] * self.n_orientations, # by default it's consistent
+            "success":[0] * self.n_orientations, # by default it's failed
+            }
+        return fk_info
+    
+    def new_result_info(self) -> dict:
+        result_info = {
+            "pose_success":[0] * self.n_orientations, 
+            "ik_success":[0] * self.n_orientations, 
+            "ik_sol_success":[0] * self.n_orientations, 
+            "fk_success":[0] * self.n_orientations, 
+            "fk_sol_success":[0] * self.n_orientations, 
+            }
+        return result_info
+    
+    def calculate_ik_fk_map(self):
 
-        self.map = []
-        n_frames = self.frames.shape[0]
-        n_orientations = self.orientations.shape[0]
-        total = n_frames * n_orientations
+        self.ik_map = []
+        self.fk_map = []
         count = 0
 
-        for i in range(n_frames): 
+        for i in range(self.n_frames): 
             frame = self.frames[i,:] # shape (3,)
-            info = {"ik_sols":[None] * n_orientations,
-                    "success":[0] * n_orientations, # by default it's failed
-                    "fk_sols":[None] * n_orientations,
-                    "consistent":[1] * n_orientations # by default it's consistent
-                    }
 
-            for j in range(n_orientations):
+            ik_info = self.new_ik_info()
+            fk_info = self.new_fk_info()
+
+            for j in range(self.n_orientations):
                 count += 1
 
                 orientation = self.orientations[j,:] 
 
-                pose = np.hstack((frame, orientation))  # shape (6,)
+                pose = np.hstack((frame, orientation)) # shape (6,)
 
                 ik_success, ik_sol = self.IK(pose)
 
                 if ik_success:
-                    info["ik_sols"][j] = ik_sol
-                    info["success"][j] = 1
-        
-                    if self.check_fk_ik_consitency: # if IK wasn't succesful then you don't check this
+                    ik_info["ik_sols"][j] = ik_sol
+                    ik_info["success"][j] = 1
 
-                        fk_success, fk_sol = self.FK(ik_sol)
+                fk_sol, consistent, fk_success = self.check_fk_consistency(pose, ik_success, ik_sol)
+                fk_info["fk_sols"][j] = fk_sol
+                fk_info["consistent"][j] = consistent
+                fk_info["success"][j] = fk_success
 
-                        if not fk_success:
-                            info["consistent"][j] = 0 # IK succeeded but FK didn't... this is an issue!
-                            continue
+                if count % 500 == 0 or count == self.total_count:
+                    print(f"Processed {count} / {self.total_count} poses")
 
-                        info["fk_sols"][j] = fk_sol
+            ik_info["success"] = np.array(ik_info["success"])
+            fk_info["consistent"] = np.array(fk_info["consistent"])
+            fk_info["success"] = np.array(fk_info["success"])
 
-                        if not np.allclose(fk_sol, pose):
-                            print("[ERROR] IK/FK not consistent")
-                            print("Pose: ", np.round(pose,6))
-                            print("ik_sol: ", ik_success, np.round(ik_sol,6))
-                            print("fk_sol: ", fk_success, np.round(fk_sol,6))
-                            info["consistent"][j] = 0
+            self.ik_map.append(ik_info)
+            self.fk_map.append(fk_info)
 
+        assert len(self.ik_map) == len(self.frames)
 
-                if count % 500 == 0 or count == total:
-                    print(f"Processed {count} / {total} poses")
+    def check_fk_consistency(self, pose, ik_success, ik_sol): # return fk_sol, consitent, fk_success
+        fk_sol = None
+        consistent = 1
+        fk_success = 0
 
-            info["success"] = np.array(info["success"])
-            info["consistent"] = np.array(info["consistent"])
-            
-            self.map.append(info)
+        if not ik_success:
+            return fk_sol, consistent, fk_success
+                
+        fk_success, fk_sol = self.FK(ik_sol)
 
-        assert len(self.map) == len(self.frames)
+        if not fk_success:
+            consistent = 0
+            return None, consistent, fk_success
+      
+        if not self.pose_is_close(fk_sol, pose):
+            # print("[ERROR] IK/FK not consistent")
+            # print("ik_sol: ", ik_success, np.round(ik_sol,6))
+            consistent = 0
+
+        return fk_sol, consistent, fk_success
+    
+
+    def calculate_fk_map(self):
+        """ Not needed as done at same time as IK"""
+
+        self.fk_map = []
+        count = 0
+
+        for i in range(self.n_frames): 
+            frame = self.frames[i,:] # shape (3,)
+            ik_info = self.ik_map[i]
+            fk_info = self.new_fk_info()
+
+            for j in range(self.n_orientations):
+                count += 1
+
+                ik_success = ik_info["success"][j]
+                if ik_success:
+
+                    orientation = self.orientations[j,:] 
+                    pose = np.hstack((frame, orientation)) # shape (6,)
+                    ik_sol = ik_info["ik_sols"][j] # stored solution for this pose
+
+                    fk_sol, consistent, fk_success = self.check_fk_consistency(pose, ik_success, ik_sol)
+                    fk_info["fk_sols"][j] = fk_sol
+                    fk_info["consistent"][j] = consistent
+                    fk_info["success"][j] = fk_success
+
+            fk_info["consistent"] = np.array(fk_info["consistent"])
+            fk_info["success"] = np.array(fk_info["success"])
+            self.fk_map.append(fk_info)
+    
+    def compare_map(self, map_2):
+        """
+        Unpacks two maps and checks that the order and magnitude of values are the same!
+        """
+
+        result_map = []
+
+        frames_1, orientations_1 = self.frames, self.orientations
+        ik_map_1, fk_map_1 = self.ik_map, self.fk_map
+
+        frames_2, orientations_2 = map_2.frames, map_2.orientations
+        ik_map_2, fk_map_2 = map_2.ik_map, map_2.fk_map
+
+        # First check that lengths are all equal
+        # Not needed actually, as long as its correct doesn't matter if its longer
+        count = 0
+        for i in range(self.n_frames): 
+            frame_1 = frames_1[i,:] # shape (3,)
+            frame_2 = frames_2[i,:] # shape (3,)
+
+            ik_info_1 = ik_map_1[i]
+            ik_info_2 = ik_map_2[i]
+
+            fk_info_1 = fk_map_1[i]
+            fk_info_2 = fk_map_2[i]
+
+            result_info = self.new_result_info()
+
+            for j in range(self.n_orientations):
+                count += 1
+
+                # Check frame poses are the same. 
+                # Important that inputs are the same, or outputs are not likely to be!
+                orientation_1 = orientations_1[j,:] # shape (3,)
+                orientation_2 = orientations_2[j,:] # shape (3,)
+
+                pose_1 = np.hstack((frame_1, orientation_1)) # shape (6,)
+                pose_2 = np.hstack((frame_2, orientation_2)) # shape (6,)
+
+                pose_success = self.pose_is_close(pose_1, pose_2)
+                result_info["pose_success"][j] = pose_success
+
+                # Check IK results are the Same
+                ik_success_1 = ik_info_1["success"][j] 
+                ik_success_2 = ik_info_2["success"][j] 
+                result_info["ik_success"][j] = (ik_success_1 == ik_success_2)
+
+                ik_sol_1 = ik_info_1["ik_sols"][j] 
+                ik_sol_2 = ik_info_2["ik_sols"][j] 
+
+                ik_success = self.ik_sol_is_close(ik_sol_1, ik_sol_2)
+                result_info["ik_sol_success"][j] = ik_success
+
+                # Check FK results are the Same
+                # This may fail if they don't have the same collision checking anymore!
+                fk_success_1 = fk_info_1["success"][j] 
+                fk_success_2 = fk_info_2["success"][j] 
+                result_info["fk_success"][j] = (fk_success_1 == fk_success_2)
+
+                fk_sol_1 = fk_info_1["fk_sols"][j] 
+                fk_sol_2 = fk_info_2["fk_sols"][j] 
+
+                fk_success = self.fk_sol_is_close(fk_sol_1, fk_sol_2)
+                result_info["fk_sol_success"][j] = fk_success
+
+            result_info["ik_success"] = np.array(result_info["ik_success"])
+            result_info["ik_sol_success"] = np.array(result_info["ik_sol_success"])
+            result_info["fk_success"] = np.array(result_info["fk_success"])
+            result_info["fk_sol_success"] = np.array(result_info["fk_sol_success"])
+
+            result_map.append(result_info)
+
+        return result_map
+
+    
+    def check_for_none(self, sol_1, sol_2):
+        """
+        First bool is if you should continue computation, second bool is if they are the same:
+        """
+        if sol_1 is None and sol_2 is None:
+            return True, True  # If both are None → considered equal → return True, True
+        elif sol_1 is not None and sol_2 is not None:
+            return False, None # If both are not None → proceed to actual comparison → return False, None
+        else:
+            return True, False # If one is None → considered unequal → return True, False
+
+    def ik_sol_is_close(self, sol_1, sol_2):
+
+        found_none, success = self.check_for_none(sol_1, sol_2)
+        if found_none: return success
+
+        success = np.allclose(sol_1, sol_2)
+        if not success:
+            print(f"[ERROR] IK solutions do not match")
+            print(f"ik_sol_1: ", np.round(sol_1,6))
+            print(f"ik_sol_2: ", np.round(sol_2,6))
+        return success
+    
+    def fk_sol_is_close(self, sol_1, sol_2):
+        found_none, success = self.check_for_none(sol_1, sol_2)
+        if found_none: return success
+    
+        success = np.allclose(sol_1, sol_2)
+        if not success:
+            print(f"[ERROR] FK solutions do not match")
+            print(f"fk_sol_1: ", np.round(sol_1,6))
+            print(f"fk_sol_2: ", np.round(sol_2,6))
+        return success
+    
+    def pose_is_close(self, pose_1, pose_2):
+        """
+        I thought I may need to do quaternion difference, but because it's small angles, you can just compare directly!
+        """
+        success = np.allclose(pose_1, pose_2)
+        if not success:
+            print(f"[ERROR] Target poses do not match")
+            print(f"pose_1: ", np.round(pose_1,6))
+            print(f"pose_2: ", np.round(pose_2,6))
+        return success
 
     def save(self, file_path: str):
         data = {
