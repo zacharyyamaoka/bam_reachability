@@ -1,2 +1,4 @@
-from bam_reachability.kinematics.mock_kinematics import MockKinematics
-from bam_reachability.kinematics.moveit_kinematics import MoveItKinematics
+from bam_reachability.kinematics.mock_kin import MockKin
+from bam_reachability.kinematics.moveit_kin import MoveItKin
+from bam_reachability.kinematics.offset_wrist_kin import OffsetWristKin
+from bam_reachability.kinematics.pinocchio_kin import PinocchioKin

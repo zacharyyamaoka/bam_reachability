@@ -9,7 +9,9 @@ from bam_reachability.reachability_map import ReachabilityMap
 import numpy as np
 import os
 
-frames = rectangular_generator(scale=(1, 1, 1), step=0.05)
+# frames = rectangular_generator(scale=(1, 1, 1), step=0.05)
+frames = rectangular_generator(scale=(1, 1, 1), step=0.1)
+
 orientations = generate_deviation_vectors([0,0,1], np.deg2rad(180), np.deg2rad(30))
 
 print("Frames: ", frames.shape)
@@ -24,6 +26,6 @@ reachability = ReachabilityMap(frames, orientations, kinematics.IK, kinematics.F
 
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(base_dir, 'mock_map.pkl')
+file_path = os.path.join(base_dir, 'mock_map')
 
 reachability.save(file_path)

@@ -1,5 +1,14 @@
 
 
+I will test for the mock kinematics in here.
+
+- I will implement the moveit/pin kinematics here with the * that they require thoose packages
+
+- Tests for thoose should live in BAM_tests IMO, b/c they require automated launches, this is just a python package...
+
+
+--
+
 There are 4 things that I need to verify
 
 

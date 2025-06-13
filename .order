@@ -1,8 +1,10 @@
 bam_reachability
 bam_reachability/generators
 bam_reachability/visualizer
+bam_reachability/kinematics
+bam_reachability/robots
 bam_reachability/__pycache__
-
+tests
 README.md
 pyproject.toml
 .vscode
