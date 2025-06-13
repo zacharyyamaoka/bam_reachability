@@ -126,8 +126,8 @@ class ReachabilityMap():
             consistent = 0
             return None, consistent, fk_success
       
-        if not pose_is_close(fk_sol, pose):
-            # print("[ERROR] IK/FK not consistent")
+        if not pose_is_close(pose, fk_sol):
+            print("IK/FK not consistent")
             # print("ik_sol: ", ik_success, np.round(ik_sol,6))
             consistent = 0
 

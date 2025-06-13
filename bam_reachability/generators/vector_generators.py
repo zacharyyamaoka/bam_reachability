@@ -3,6 +3,8 @@
 import numpy as np
 import open3d as o3d
 from transforms3d.quaternions import rotate_vector, axangle2quat
+from transforms3d.euler import mat2euler
+
 from typing import Tuple
 
 """
@@ -146,7 +148,7 @@ def generate_deviation_vectors(axis=[0,0,1], max_angle_rad=np.deg2rad(180), step
 
 
 #
-def view_generator(inital_view=[0, 0, 1], hemisphere_angle=np.deg2rad(40), view_step=np.deg2rad(10), rotation_step=np.deg2rad(60)):
+def view_generator(inital_view=[0, 0, 1], hemisphere_angle=np.deg2rad(40), view_step=np.deg2rad(10), rotation_step=np.deg2rad(60)) -> list:
     """
     Generate a set of rotation matrices representing different viewing directions and in-plane rotations.
 
@@ -172,13 +174,24 @@ def view_generator(inital_view=[0, 0, 1], hemisphere_angle=np.deg2rad(40), view_
     z_vectors = generate_deviation_vectors(inital_view, hemisphere_angle, view_step)
 
     R_list = []
+
     for z in z_vectors:
         x_list = generate_orthonormal_vectors(z, rotation_step)
         for x in x_list:
             y = np.cross(z, x)
             R = np.column_stack([x, y, z])  # 3x3 rotation matrix
             R_list.append(R)
+
     return R_list
+
+# See similar func in tf_transformation 
+# def euler_from_matrix(matrix, axes='sxyz'):
+
+def R_to_rpy(R_input, axes='sxyz'):
+    if isinstance(R_input, list) or (isinstance(R_input, np.ndarray) and R_input.ndim == 3):
+        return [mat2euler(R, axes) for R in R_input]
+    else:
+        return mat2euler(R_input, axes)
 
 def visualize_vectors(vectors, scale=0.2):
     geometries = []
@@ -208,32 +221,55 @@ def visualize_vectors(vectors, scale=0.2):
     o3d.visualization.draw_geometries(geometries)
 
 
-def visualize_frames(rotations, scale=0.1):
+def visualize_frames(rotations, scale=0.1, only_z=False):
     """
-    Visualize a list of coordinate frames (position + orientation) using Open3D.
+    Visualize a list of coordinate frames or just their Z axes using Open3D.
 
     Parameters
     ----------
-    positions : List[np.ndarray] or (N, 3)
-        List of 3D frame origins.
-    rotations : List[np.ndarray] or (N, 3, 3)
-        List of 3x3 rotation matrices with columns [x, y, z].
+    rotations : List[np.ndarray] or np.ndarray (3, 3) or (N, 3, 3)
+        List of 3x3 rotation matrices or a single one.
     scale : float
-        Scale of the coordinate frames.
+        Scale of the coordinate frames or arrows.
+    only_z : bool
+        If True, only the Z-axis (as an arrow) is visualized.
     """
     geometries = []
 
-    if not isinstance(rotations, list):
+    # Normalize input to a list of 3x3 matrices
+    if isinstance(rotations, np.ndarray):
+        if rotations.ndim == 2:
+            rotations = [rotations]
+        elif rotations.ndim == 3:
+            rotations = list(rotations)
+    elif not isinstance(rotations, list):
         rotations = [rotations]
 
-    for R in rotations:
-        frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=scale)
-        frame.rotate(R, center=(0, 0, 0))
-        # frame.translate(pos)
-        geometries.append(frame)
+    for R_frame in rotations:
+        if only_z:
+            arrow = o3d.geometry.TriangleMesh.create_arrow(
+                cylinder_radius=0.005,
+                cone_radius=0.01,
+                cylinder_height=scale * 0.8,
+                cone_height=scale * 0.2,
+                resolution=20,
+                cylinder_split=4,
+                cone_split=1
+            )
+            # Rotate the arrow directly using the full rotation matrix
+            arrow.rotate(R_frame, center=(0, 0, 0))
+            arrow.translate(R_frame[:, 2] * scale * 0.1)  # small offset along Z
+            arrow.paint_uniform_color([0.2, 0.6, 1.0])
+            geometries.append(arrow)
+        else:
+            frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=scale)
+            frame.rotate(R_frame, center=(0, 0, 0))
+            geometries.append(frame)
 
-    frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=scale*2)
-    geometries.append(frame)
+    # Global reference frame
+    ref_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=scale * 2)
+    geometries.append(ref_frame)
+
     o3d.visualization.draw_geometries(geometries)
 
 def get_rotation_matrix_from_z(direction):
@@ -264,6 +300,10 @@ def mask_vectors_by_angle(vectors, target_vector, max_angle_rad):
 
 
 if __name__ == "__main__":
+
+    # R = np.eye(3)
+    # rpy = mat2euler(R)
+    # print(rpy)  # Should be [0.0, 0.0, 0.0]
 
     # What would give me confidence here?
 

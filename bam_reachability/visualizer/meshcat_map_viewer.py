@@ -40,13 +40,25 @@ class MeshcatMapViewer:
 
     def display_current_pose(self):
         ik_info = self.reach_map.ik_map[self.frame_index]
-        if ik_info["success"][self.orient_index]:
+        success_list = ik_info["success"]
+        success_binary = [1 if s else 0 for s in success_list]
+        print(f"Frame {self.frame_index} success list: {success_binary}")
+
+        if success_list[self.orient_index]:
             q = ik_info["ik_sols"][self.orient_index]
             self.meshcat_client.display(q)
-
             print(f"[✓] Displaying frame {self.frame_index}, orientation {self.orient_index}")
         else:
-            print(f"[✗] Frame {self.frame_index}, orientation {self.orient_index} has no IK solution")
+            # Try to find next successful orientation
+            for i in range(self.reach_map.n_orientations):
+                next_idx = (self.orient_index + i) % self.reach_map.n_orientations
+                if success_list[next_idx]:
+                    self.orient_index = next_idx
+                    q = ik_info["ik_sols"][self.orient_index]
+                    self.meshcat_client.display(q)
+                    print(f"[✓] Found fallback orientation {self.orient_index} for frame {self.frame_index}")
+                    return
+            print(f"[✗] No valid IK solutions for frame {self.frame_index}")
 
     def next_orientation(self):
         self.orient_index = (self.orient_index + 1) % self.reach_map.n_orientations
@@ -75,10 +87,10 @@ class MeshcatMapViewer:
 
         print("Viewer running... Press keys to interact.")
         print("  [Space]    → Random frame")
-        print("  [← / →]    → Previous / Next frame")
-        print("  [↑ / ↓]    → Next / Previous orientation")
-        print("  [+ / =]    → Increase point size")
-        print("  [- / _]    → Decrease point size")
+        print("  [← / →]    → Next / Previous orientation")
+        print("  [↑ / ↓]    → Previous / Next frame")
+        print("  [+]        → Increase point size")
+        print("  [-]        → Decrease point size")
         print("  [Q / Esc]  → Quit")
 
         def on_press(key):
@@ -86,20 +98,20 @@ class MeshcatMapViewer:
                 k = key.char
             except AttributeError:
                 k = key.name
-
-            if k == ' ':
+            print("Key pressed: ", k)
+            if k == "space":
                 self.random_frame()
-            elif k == 'right':
+            elif k == 'up':
                 self.frame_index = (self.frame_index + 1) % self.reach_map.n_frames
                 self.orient_index = 0
                 self.display_current_pose()
-            elif k == 'left':
+            elif k == 'down':
                 self.frame_index = (self.frame_index - 1) % self.reach_map.n_frames
                 self.orient_index = 0
                 self.display_current_pose()
-            elif k == 'up':
+            elif k == 'right':
                 self.next_orientation()
-            elif k == 'down':
+            elif k == 'left':
                 self.prev_orientation()
             elif k in ['+', '=']:
                 self.increase_point_size()
@@ -121,7 +133,7 @@ if __name__ == "__main__":
     import pinocchio as pin
 
     # Load reachability map
-    rmap = ReachabilityMap.load("/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur/ur_moveit_map_13_jun_2025.pkl")
+    rmap = ReachabilityMap.load("/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur/ur_offset_wrist_map_13_jun_2025.pkl")
 
     # Get colorized point cloud
     frames, colors = colorize_map(rmap, histogram=False)
