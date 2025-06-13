@@ -12,6 +12,7 @@ Make sure that orientation frames and IK tip are aligned
 
 - generally IK tip is has +Z pointing out of the final link
 
+#TODO refactor to rename frames -> positions which is more accurate!
 """
 class ReachabilityMap():
 
@@ -24,6 +25,17 @@ class ReachabilityMap():
 
         assert frames.ndim == 2 and frames.shape[1] == 3  # shape: (N, 3)
         self.frames = frames 
+
+        if orientations.ndim == 3:
+            assert orientations.shape[0] == frames.shape[0], "Mismatch in number of frames"
+            self.per_frame_orientations = True
+            self.n_orientations = orientations.shape[1]
+        elif orientations.ndim == 2:
+            self.per_frame_orientations = False
+            self.n_orientations = orientations.shape[0]
+        else:
+            raise ValueError("Orientations must be of shape (M, 3) or (N, M, 3)")
+
         self.orientations = orientations
 
         self.n_frames = self.frames.shape[0]
@@ -70,7 +82,10 @@ class ReachabilityMap():
             for j in range(self.n_orientations):
                 count += 1
 
-                orientation = self.orientations[j,:] 
+                if self.per_frame_orientations:
+                    orientation = self.orientations[i, j, :]
+                else:
+                    orientation = self.orientations[j, :]
 
                 pose = np.hstack((frame, orientation)) # shape (6,)
 
@@ -85,8 +100,8 @@ class ReachabilityMap():
                 fk_info["consistent"][j] = consistent
                 fk_info["success"][j] = fk_success
 
-                if count % 500 == 0 or count == self.total_count:
-                    print(f"Processed {count} / {self.total_count} poses")
+                # if count % 1000 == 0 or count == self.total_count:
+                print(f"Processed {count} / {self.total_count} poses")
 
             ik_info["success"] = np.array(ik_info["success"])
             fk_info["consistent"] = np.array(fk_info["consistent"])
@@ -102,7 +117,7 @@ class ReachabilityMap():
         consistent = 1
         fk_success = 0
 
-        if not ik_success:
+        if not ik_success: # the ik_sol is ill-defined here so no point in checking!
             return fk_sol, consistent, fk_success
                 
         fk_success, fk_sol = self.FK(ik_sol)

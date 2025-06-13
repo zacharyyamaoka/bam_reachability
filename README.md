@@ -1,6 +1,35 @@
 
 # TODO
 
+- The most important thing is moveit, as that is what is actually is called
+- If I want to use the other packages though freely I should also verify they are correct!
+
+Todo
+
+Kinematics
+- [X] Verify Mock Kinematics
+- [ ] Verify Moveit Kinematics
+- [ ] Verify Offset Wrist Kinematics
+- [ ] Verify Pinnochio Kinematics
+
+Analysis 
+- [ ] Run full analysis for Mock Robot
+- [ ] Run full + table analysis for UR robot
+- [ ] Run full + table analysis for BAM robot
+
+Bounds
+- [ ] Create function that finds the smallest/largest primative shape that contains/is within a pointcloud
+- [ ] Create functions to sample points within full or table dexterous, 4 dof or hemisphere workspace
+- [ ] Create function that reports error if pose is outside dexterous, 4 dof, hemisphere or reach workspace
+
+Foxglove Viz
+- [ ] Publish orietanted cube marker for table workspace
+- [ ] Publish full dexterous + reach workspace mesh markers
+- [ ] Calculate dexterous, reach, 4 dof, hemisphere workspace inside table workspace (Union)
+- [ ] Publish point cloud for negative 4 dof and hemisphere points inside table workspace
+
+Publish dexterous, reach, 4 DOF, Hemisphere workspace mesh markers 
+
 - Run Tests on each robot
 - Save result
 - Load result
@@ -32,6 +61,9 @@
 - What are the rectangular workspaces? (width and height)
 
 # Installation
+
+
+OLD, now installing as a Ros package
 
 Activate desired venv, then:
 

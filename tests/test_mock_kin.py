@@ -1,106 +1,103 @@
 #!/usr/bin/env python3
 
-"""
-Load an older analysis (map_old):
-    - option for small or large
-    - option to display the analysis before starting to test using viz
-
-Then:
-    - run the analysis agian on the same frames, twice -> (map_1, map_2)
-    - run the analysis agian on the same frames using pin -> (map_pin)
-
-Then check:
-
-    1. Consistency:
-    Mean map_1.fk_map["consistent"], should be 1
-
-    2. Deterministic:
-    Running the same analysis twice returns the same result
-    compare(map_1, map_2)
-
-    3. Stable:
-    New map is same as old map
-    compare(map_1, map_old)
-
-    4. Compatible:
-    Maps from different kinematics are the same
-    compare(map_1, map_pin)
-
-Careful!!!!! This will fail with the mock unless you seed it properly!!
-"""
-
-import numpy as np
-from bam_reachability.reachability_map import ReachabilityMap
-from bam_reachability.visualizer import AlignedSlicer, colorize_map # Optional visualization
-from bam_reachability.compare_maps import compare_map 
 from bam_reachability.kinematics import MockKin  # Fill in with your actual functions
+from bam_reachability.analysis.run_reachability_test import run_reachability_test
 
-def test_mock_kin():
+import pytest
+from typing import Callable
 
-    kinematics = MockKin(L1=0.3, L2=0.3) # this needs to be the same as the orginal map or it will fail!
-    IK = kinematics.IK
-    FK = kinematics.FK
-    IK_PIN = IK # not implemented right now
-    FK_PIN = FK 
 
-    n_test_frames = 100
-    map_old_path = "/home/bam/python_ws/bam_reachability/bam_reachability/robots/mock/mock_map_12_jun_2025.pkl"
-    viz = False
+OLD_MOCK_MAP_PATH = "/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/mock/mock_map_13_jun_2025.pkl"
 
-    # Load previous analysis
-    print("[Step] Loading old map...")
-    map_old = ReachabilityMap.load(map_old_path, IK=IK, FK=FK)
+def test_mock_kin_same():
+    K = MockKin(L1=0.3, L2=0.3) # this needs to be the same as the orginal map or it will fail!
 
-    if viz:
-        print("[Step] Visualizing old map...")
-        points, colors = colorize_map(map_old, histogram=True)
-        slicer = AlignedSlicer(points, step=0.05, colors=colors)
-        slicer.run()
+    run_reachability_test(
+        name="MockKin Expecting Success",
+        IK=K.IK,
+        FK=K.FK,
+        IK_ALT=K.IK,  # Replace with alternate IK if available
+        FK_ALT=K.FK,
+        map_old_path=OLD_MOCK_MAP_PATH,
+        seed_reset_fn=K.seed_reset,
+        reduce_count=None,
+        visualize=False,
+        expect_fail_consistency=False,
+        expect_fail_deterministic=False,
+        expect_fail_stability=False,
+        expect_fail_compatibility=False,
+    )
 
-    # This screws up the order of the random seed! so cannot use for MockKin
-    # map_old.reduce_random(n_test_frames) # to speed up testing
+def test_mock_diff_l():
+    K = MockKin(L1=0.3, L2=0.3) # this needs to be the same as the orginal map or it will fail!
+    K_DIFF_L = MockKin(L1=0.5, L2=0.5) # this needs to be the same as the orginal map or it will fail!
 
-    if viz:
-        print("[Step] Visualizing reduced map...")
-        points, colors = colorize_map(map_old, histogram=True)
-        slicer = AlignedSlicer(points, step=0.05, colors=colors)
-        slicer.run()
+    run_reachability_test(
+        name="MockKin Different Link Lengths",
+        IK=K.IK,
+        FK=K.FK,
+        IK_ALT=K_DIFF_L.IK,  # Replace with alternate IK if available
+        FK_ALT=K_DIFF_L.FK,
+        map_old_path=OLD_MOCK_MAP_PATH,
+        seed_reset_fn=K.seed_reset,
+        reduce_count=None,
+        visualize=False,
+        expect_fail_consistency=False,
+        expect_fail_deterministic=False,
+        expect_fail_stability=False,
+        expect_fail_compatibility=True,
+    )
 
-    print("[Step] Recomputing reachability map 1...")
-    map_1 = ReachabilityMap(frames=map_old.frames, orientations=map_old.orientations, IK=IK, FK=FK)
-    kinematics.seed_reset() 
+def test_mock_no_reset():
+    K = MockKin(L1=0.3, L2=0.3) # this needs to be the same as the orginal map or it will fail!
 
-    print("[Step] Recomputing reachability map 2...")
-    map_2 = ReachabilityMap(frames=map_old.frames, orientations=map_old.orientations, IK=IK, FK=FK)
-    kinematics.seed_reset() 
+    run_reachability_test(
+        name="MockKin No Reset",
+        IK=K.IK,
+        FK=K.FK,
+        IK_ALT=K.IK,  # Replace with alternate IK if available
+        FK_ALT=K.FK,
+        map_old_path=OLD_MOCK_MAP_PATH,
+        seed_reset_fn=None,
+        reduce_count=None,
+        visualize=False,
+        expect_fail_consistency=False, # This will still be consitent b/c the randomness is in the IK
+        expect_fail_deterministic=True, # Except to fail beacuse on the second run, the IK will return succesful orientations randomly
+        expect_fail_stability=False, # This will succeed beacuse your using the same seed, and on the first run it will return the same result!
+        expect_fail_compatibility=True, # Will fail beacuse on the third run it will return different random numbers ^ , its like its a different robot
+    )
 
-    print("[Step] Computing reachability map using pinocchio IK/FK...")
-    map_pin = ReachabilityMap(frames=map_old.frames, orientations=map_old.orientations, IK=IK_PIN, FK=FK_PIN)
-    kinematics.seed_reset() 
+def test_mock_diff_seed():
 
-    print("\n[TEST 1] Consistency (FK consistent w/ IK):")
-    fk_consistent = np.mean(np.array([info["consistent"] for info in map_1.fk_map]))
-    print(f"Mean FK consistency = {fk_consistent:.3f}")
+    K_DIFF_SEED = MockKin(L1=0.3, L2=0.3, seed=1) 
 
-    print("\n[TEST 2] Deterministic (same result twice):")
-    deterministic_results = compare_map(map_1, map_2)
-    print(deterministic_results)
-    for key, value in deterministic_results.items():
-        assert value == 1.0
+    run_reachability_test(
+        name="MockKin Different Seed",
+        IK=K_DIFF_SEED.IK,
+        FK=K_DIFF_SEED.FK,
+        IK_ALT=K_DIFF_SEED.IK,  # Replace with alternate IK if available
+        FK_ALT=K_DIFF_SEED.FK,
+        map_old_path=OLD_MOCK_MAP_PATH,
+        seed_reset_fn=K_DIFF_SEED.seed_reset,
+        reduce_count=None,
+        visualize=False,
+        expect_fail_consistency=False, # This will still be consitent b/c the randomness is in the IK
+        expect_fail_deterministic=False, # Will suceed because seed is reset between run 1 and 2
+        expect_fail_stability=True, # Will fail beacuse different seed is used from old map and new run 1
+        expect_fail_compatibility=False, # This will suceed beacuse IK_AL and IK are using the same seed
+    )
 
-    print("\n[TEST 3] Stable (same result as old):")
-    stable_results = compare_map(map_1, map_old)
-    print(stable_results)
-    for key, value in stable_results.items():
-        assert value == 1.0
-
-    print("\n[TEST 4] Compatible (same result with pin IK/FK):")
-    compatible_results = compare_map(map_1, map_pin)
-    print(compatible_results)
-    for key, value in compatible_results.items():
-        assert value == 1.0
-
-    print("\n[Done] All tests completed.")
 
 if __name__ == "__main__":
-    test_mock_kin()
+    test_mock_kin_same()
+    test_mock_diff_l()
+    test_mock_no_reset()
+    test_mock_diff_seed()
+
+
+# colcon test --packages-select bam_reachability --pytest-args -m fast
+# colcon test-result --all
+# colcon test-result --all --verbose
+
+# colcon test --packages-select bam_reachability --pytest-args="-m fast"
+# colcon test --packages-select bam_reachability --pytest-args="-m slow"
