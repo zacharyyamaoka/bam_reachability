@@ -1,2 +1,2 @@
 from bam_reachability.visualizer.aligned_slicer import AlignedSlicer
-from bam_reachability.visualizer.colorize_map import colorize_map
+from bam_reachability.visualizer.colorize_map import colorize_map, colorize_inconsistency

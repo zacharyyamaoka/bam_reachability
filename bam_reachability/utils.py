@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 
 import numpy as np
+from transforms3d.euler import euler2quat, euler2mat
 
-from transforms3d.euler import euler2quat
+def xyzrpy_to_matrix(xyz, rpy):
+    mat = np.eye(4)
+    mat[:3, :3] = euler2mat(*rpy)  # rotation
+    mat[:3, 3] = xyz               # translation
+    return mat
 
-def quats_equal_up_to_sign(rpy1, rpy2, tol=1e-6):
+def quats_equal_up_to_sign(rpy1, rpy2, tol=1e-6, verbose=False):
     """
     Check if two RPY Euler angles result in equivalent rotations by comparing
     the resulting quaternions up to sign.
@@ -20,11 +25,25 @@ def quats_equal_up_to_sign(rpy1, rpy2, tol=1e-6):
     q2 = np.array(euler2quat(*rpy2, axes='sxyz'))
 
     # Rearrange to [x, y, z, w] if needed
-    # q1 = np.roll(q1, -1)
-    # q2 = np.roll(q2, -1)
+    q1 = np.roll(q1, -1)
+    q2 = np.roll(q2, -1)
 
-    return np.allclose(q1, q2, atol=tol) or np.allclose(q1, -q2, atol=tol)
-
+    if np.allclose(q1, q2, atol=tol) or np.allclose(q1, -q2, atol=tol):
+        return True
+    else:
+        if verbose:
+            # Compute angle between quaternions
+            dot = np.abs(np.dot(q1, q2))  # use absolute for sign invariance
+            dot = min(1.0, max(-1.0, dot))  # clamp to valid domain
+            angle_rad = 2 * np.arccos(dot)
+            angle_deg = np.degrees(angle_rad)
+            
+            print(f"[ERROR] Rotations do not match within tolerance.")
+            print(f"  rpy1: {rpy1}")
+            print(f"  rpy2: {rpy2}")
+            print(f"  angle difference: {angle_deg:.4f} deg")
+        return False
+    
 def check_for_none(sol_1, sol_2):
     """
     First bool is if you should continue computation, second bool is if they are the same:
@@ -36,23 +55,23 @@ def check_for_none(sol_1, sol_2):
     else:
         return True, False # If one is None → considered unequal → return True, False
 
-def ik_sol_is_close(sol_1, sol_2):
+def ik_sol_is_close(sol_1, sol_2, verbose=False):
 
     found_none, success = check_for_none(sol_1, sol_2)
     if found_none: return success
 
     success = np.allclose(sol_1, sol_2)
-    if not success:
+    if not success and verbose:
         print(f"[ERROR] IK solutions do not match")
         print(f"ik_sol_1: ", np.round(sol_1,6))
         print(f"ik_sol_2: ", np.round(sol_2,6))
     return success
 
-def fk_sol_is_close(sol_1, sol_2):
+def fk_sol_is_close(sol_1, sol_2, verbose=False):
     found_none, success = check_for_none(sol_1, sol_2)
     if found_none: return success
 
-    return pose_is_close(sol_1, sol_2)
+    return pose_is_close(sol_1, sol_2, verbose)
 
     # success = np.allclose(sol_1, sol_2)
     # if not success:
@@ -61,7 +80,7 @@ def fk_sol_is_close(sol_1, sol_2):
     #     print(f"fk_sol_2: ", np.round(sol_2,6))
     # return success
 
-def pose_is_close(pose_1, pose_2):
+def pose_is_close(pose_1, pose_2, verbose=False):
     """
     I thought I may need to do quaternion difference, but because it's small angles, you can just compare directly!
 
@@ -69,21 +88,18 @@ def pose_is_close(pose_1, pose_2):
     """
     success = np.allclose(pose_1, pose_2)
     if not success:
-        print(f"[ERROR] Poses do not match")
-        print(f"pose_1: ", np.round(pose_1,6))
-        print(f"pose_2: ", np.round(pose_2,6))
 
         # See this function here.. for ref
         # from bam_ros_utils.geometry import pose_close
-        print("Trying to compare angles directly")
         rpy_1 = pose_1[3:]
         rpy_2 = pose_2[3:]
 
         success = quats_equal_up_to_sign(rpy_1, rpy_2)
 
-        if success:
-            print("Success")
-        else:
-            print("Failed")
+        if not success and verbose:
+            print(f"[ERROR] Poses do not match")
+            print(f"pose_1: ", np.round(pose_1,6))
+            print(f"pose_2: ", np.round(pose_2,6))
+
 
     return success

@@ -46,6 +46,7 @@ def test_mock_diff_l():
         expect_fail_deterministic=False,
         expect_fail_stability=False,
         expect_fail_compatibility=True,
+        skip_keys=["Compatible[pose_success]","Compatible[fk_consistent]"] # poses should still be the same, and can possible all still have solutions
     )
 
 def test_mock_no_reset():
@@ -65,6 +66,7 @@ def test_mock_no_reset():
         expect_fail_deterministic=True, # Except to fail beacuse on the second run, the IK will return succesful orientations randomly
         expect_fail_stability=False, # This will succeed beacuse your using the same seed, and on the first run it will return the same result!
         expect_fail_compatibility=True, # Will fail beacuse on the third run it will return different random numbers ^ , its like its a different robot
+        skip_keys=["Compatible[pose_success]","Deterministic[pose_success]","Compatible[fk_consistent]","Deterministic[fk_consistent]"] # poses should still be the same
     )
 
 def test_mock_diff_seed():
@@ -85,6 +87,7 @@ def test_mock_diff_seed():
         expect_fail_deterministic=False, # Will suceed because seed is reset between run 1 and 2
         expect_fail_stability=True, # Will fail beacuse different seed is used from old map and new run 1
         expect_fail_compatibility=False, # This will suceed beacuse IK_AL and IK are using the same seed
+        skip_keys=["Stable[pose_success]","Stable[fk_consistent]"] # poses should still be the same
     )
 
 

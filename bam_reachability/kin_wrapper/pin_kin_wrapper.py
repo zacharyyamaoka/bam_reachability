@@ -36,12 +36,19 @@ class PinKinWrapper():
         model, collision_model, visual_model = urdf_to_models(urdf_xml=rp.urdf_xml, package_name=rp.mesh_package_name)
         # K_urdf = PinKinematics(model, rp.base_link, rp.ik_tip, verbose)
         self.K = PinKinematics(model, rp.base_link, "tool0", verbose) # it can do the transform for me! which is helpful to confirm
+        # self.K = PinKinematics(model, rp.base_link, rp.ik_tip, verbose) # it can do the transform for me! which is helpful to confirm
 
         self.robot_params = rp
 
 
     def IK(self, pose: np.ndarray)-> Tuple[bool, np.ndarray]:
-        print("Not Implemented")
+        """
+        Very cool! So PinKinWrapper can not by it self completely the map
+        beacuse it cannot calculate the IK to get the joint positions to use for the FK
+        I can replace it with the Offset Wrist IK though... then you can check consitentcy!
+        """
+        raise NotImplementedError("IK method must be provided by another IK")
+
         return False, None
 
     def FK(self, joint_positions: np.ndarray)-> Tuple[bool, np.ndarray]:

@@ -64,7 +64,7 @@ arm_name = "ur"
 
 # 1. Generate Frames
 
-positions = rectangular_generator(scale=(1, 1, 1), step=0.2)
+positions = rectangular_generator(scale=(1, 1, 1), step=0.3)
 
 # Beacuse it takes so long I can only test 1 orientation
 n_orientations = 1

@@ -51,6 +51,7 @@ def run_reachability_test(
     expect_fail_deterministic=False,
     expect_fail_stability=False,
     expect_fail_compatibility=False,
+    skip_keys=[]
 ):
     print(f"[TESTING] Starting tests for '{name}'")
 
@@ -84,11 +85,13 @@ def run_reachability_test(
     map_alt = ReachabilityMap(map_old.frames, map_old.orientations, IK=IK_ALT, FK=FK_ALT)
 
     def check(name, value, expected=1.0, allow_fail=False):
-        if "pose_success" in name: # should always be True
-             expected = 1.0
-             allow_fail = False
-             print("overriding pose success")
-        
+        if skip_keys:
+            if name in skip_keys:
+                # expected = 1.0
+                # allow_fail = False
+                print(f"[SKIP KEY] {name}")
+                return
+
         if value == expected:
             if allow_fail:
                 raise AssertionError(f"[UNEXPECTED PASS] {name}: Got {value}, but was expected to fail.")

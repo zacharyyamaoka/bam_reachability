@@ -88,7 +88,6 @@ class ReachabilityMap():
                     orientation = self.orientations[j, :]
 
                 pose = np.hstack((frame, orientation)) # shape (6,)
-
                 ik_success, ik_sol = self.IK(pose)
 
                 if ik_success:
@@ -100,8 +99,8 @@ class ReachabilityMap():
                 fk_info["consistent"][j] = consistent
                 fk_info["success"][j] = fk_success
 
-                # if count % 1000 == 0 or count == self.total_count:
-                print(f"Processed {count} / {self.total_count} poses")
+                if count % 1000 == 0 or count == self.total_count:
+                    print(f"Processed {count} / {self.total_count} poses")
 
             ik_info["success"] = np.array(ik_info["success"])
             fk_info["consistent"] = np.array(fk_info["consistent"])
@@ -128,7 +127,7 @@ class ReachabilityMap():
       
         if not pose_is_close(pose, fk_sol):
             print("IK/FK not consistent")
-            # print("ik_sol: ", ik_success, np.round(ik_sol,6))
+            print("ik_sol: ", ik_success, np.round(ik_sol,6))
             consistent = 0
 
         return fk_sol, consistent, fk_success

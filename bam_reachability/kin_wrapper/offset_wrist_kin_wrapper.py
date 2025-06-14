@@ -31,12 +31,12 @@ import numpy as np
 
 class OffsetWristKinWrapper():
     
-    def __init__(self, arm="ur"):
+    def __init__(self, arm="ur", use_tool0=True):
 
         rp = get_robot_params(arm)
 
         # Limits can also be read from URDF, but this is nice because no other dependecies...
-        self.K = OffsetWristKinematics(rp.dh_list, rp.base_link, rp.lower_limits, rp.upper_limits, use_tool0=True, verbose=False)
+        self.K = OffsetWristKinematics(rp.dh_list, rp.base_link, rp.lower_limits, rp.upper_limits, use_tool0=use_tool0, verbose=False)
         self.robot_params = rp
     
     def IK(self, pose: np.ndarray)-> Tuple[bool, np.ndarray]:

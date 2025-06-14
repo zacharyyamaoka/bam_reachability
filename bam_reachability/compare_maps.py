@@ -11,10 +11,11 @@ def new_diff_info(n_orientations) -> dict:
         "ik_sol_success":[0] * n_orientations, 
         "fk_success":[0] * n_orientations, 
         "fk_sol_success":[0] * n_orientations, 
+        "fk_consistent":[0] * n_orientations, 
         }
     return diff_info
 
-def compare_map(map_1: ReachabilityMap, map_2: ReachabilityMap):
+def compare_map(map_1: ReachabilityMap, map_2: ReachabilityMap, verbose=False):
     """
     Compares two ReachabilityMaps and returns mean values for each consistency metric.
     All returned values should be 1.0 if maps are identical.
@@ -63,13 +64,13 @@ def compare_map(map_1: ReachabilityMap, map_2: ReachabilityMap):
             pose_1 = np.hstack((frame_1, orientation_1.reshape(-1))) # shape (6,)
             pose_2 = np.hstack((frame_2, orientation_2.reshape(-1))) # shape (6,)
 
-            diff_info["pose_success"][j] = pose_is_close(pose_1, pose_2)
+            diff_info["pose_success"][j] = pose_is_close(pose_1, pose_2, verbose)
 
             # Check IK results are the Same
             ik_success_1 = ik_info_1["success"][j] 
             ik_success_2 = ik_info_2["success"][j] 
             ik_success_same = (ik_success_1 == ik_success_2)
-            if not ik_success_same:
+            if not ik_success_same and verbose:
                 print("[ERROR] IK success not the same")
                 print(f"ik_success_1: {ik_success_1} {ik_info_1["ik_sols"][j]}")
                 print(f"ik_success_1: {ik_success_2} {ik_info_2["ik_sols"][j]}")
@@ -78,7 +79,7 @@ def compare_map(map_1: ReachabilityMap, map_2: ReachabilityMap):
 
             ik_sol_1 = ik_info_1["ik_sols"][j] 
             ik_sol_2 = ik_info_2["ik_sols"][j] 
-            diff_info["ik_sol_success"][j] = ik_sol_is_close(ik_sol_1, ik_sol_2)
+            diff_info["ik_sol_success"][j] = ik_sol_is_close(ik_sol_1, ik_sol_2, verbose)
 
             # Check FK results are the Same
             # This may fail if they don't have the same collision checking anymore!
@@ -86,13 +87,18 @@ def compare_map(map_1: ReachabilityMap, map_2: ReachabilityMap):
             fk_success_2 = fk_info_2["success"][j] 
             diff_info["fk_success"][j] = (fk_success_1 == fk_success_2)
 
+            fk_consistent_1 = fk_info_1["consistent"][j] 
+            fk_consistent_2 = fk_info_2["consistent"][j] 
+            diff_info["fk_consistent"][j] = (fk_consistent_1 == fk_consistent_2)
+
             fk_sol_1 = fk_info_1["fk_sols"][j] 
             fk_sol_2 = fk_info_2["fk_sols"][j] 
-            diff_info["fk_sol_success"][j] = fk_sol_is_close(fk_sol_1, fk_sol_2)
+            diff_info["fk_sol_success"][j] = fk_sol_is_close(fk_sol_1, fk_sol_2, verbose)
 
         diff_info["ik_success"] = np.array(diff_info["ik_success"])
         diff_info["ik_sol_success"] = np.array(diff_info["ik_sol_success"])
         diff_info["fk_success"] = np.array(diff_info["fk_success"])
+        diff_info["fk_consistent"] = np.array(diff_info["fk_consistent"]) # if they have the same consitency and one is 100% consistent then so is the other one
         diff_info["fk_sol_success"] = np.array(diff_info["fk_sol_success"])
 
         diff_map.append(diff_info)

@@ -26,6 +26,8 @@ class MeshcatMapViewer:
         self.orient_index = 0
         self.pose = None
 
+        self.inconsistent_mode = False
+
         self.display_point_cloud()
         self.display_current_pose()
 
@@ -38,27 +40,70 @@ class MeshcatMapViewer:
 
         self.meshcat_client.display_pointcloud(points, color, size=self.size)
 
+        # fk_info = {
+        #     "fk_sols":[None] * self.n_orientations,
+        #     "consistent":[1] * self.n_orientations, # by default it's consistent
+        #     "success":[0] * self.n_orientations, # by default it's failed
+        #     }
+        
     def display_current_pose(self):
         ik_info = self.reach_map.ik_map[self.frame_index]
-        success_list = ik_info["success"]
-        success_binary = [1 if s else 0 for s in success_list]
-        print(f"Frame {self.frame_index} success list: {success_binary}")
+        fk_info = self.reach_map.fk_map[self.frame_index]
 
-        if success_list[self.orient_index]:
+        ik_success_list = ik_info["success"]
+        fk_success_list = fk_info["success"]
+        fk_consistent_list = fk_info["consistent"]
+            
+        if ik_success_list[self.orient_index]:
             q = ik_info["ik_sols"][self.orient_index]
             self.meshcat_client.display(q)
             print(f"[✓] Displaying frame {self.frame_index}, orientation {self.orient_index}")
+            found = True
         else:
             # Try to find next successful orientation
-            for i in range(len(success_list)):
-                next_idx = (self.orient_index + i) % len(success_list)
-                if success_list[next_idx]:
-                    self.orient_index = next_idx
-                    q = ik_info["ik_sols"][self.orient_index]
-                    self.meshcat_client.display(q)
-                    print(f"[✓] Found fallback orientation {self.orient_index} for frame {self.frame_index}")
-                    return
-            print(f"[✗] No valid IK solutions for frame {self.frame_index}")
+            found = False
+            # for i in range(len(ik_success_list)):
+            #     next_idx = (self.orient_index + i) % len(ik_success_list)
+            #     if ik_success_list[next_idx]:
+            #         self.orient_index = next_idx
+            #         q = ik_info["ik_sols"][self.orient_index]
+            #         self.meshcat_client.display(q)
+            #         print(f"[✓] Found fallback orientation {self.orient_index} for frame {self.frame_index}")
+            #         found = True
+            #         break
+
+            if not found:
+                self.meshcat_client.display(np.array([0,0,0,0,0,0]))
+                print(f"[✗] No valid IK solutions for frame {self.frame_index}")
+
+
+
+        # Show Target pose always
+        if self.reach_map.per_frame_orientations:
+            orientation = self.reach_map.orientations[self.frame_index, self.orient_index, :]
+        else:
+            orientation = self.reach_map.orientations[self.orient_index, :]
+        position = self.reach_map.frames[self.frame_index]
+        pose = np.hstack((position, orientation))
+        self.meshcat_client.display_xyzrpy(pose[:3], pose[3:], name="target_pose")
+
+        if found:
+            if fk_success_list[self.orient_index]:
+                fk_pose = fk_info["fk_sols"][self.orient_index]  # shape (6,) = [xyz rpy]
+                self.meshcat_client.display_xyzrpy(fk_pose[:3], fk_pose[3:], name="fk_pose")
+        else:
+            print(f"[✗] No valid FK solutions for frame {self.frame_index}")
+            self.meshcat_client.clear_xyzrpy(name="fk_pose")
+
+        # do this after you have found the orient index
+        def mark_index(lst):
+            return [
+                f"[{int(v)}]" if i == self.orient_index else f" {int(v)} "
+                for i, v in enumerate(lst)
+            ]
+        print(f"Frame {self.frame_index} ik_success list: {' '.join(mark_index(ik_success_list))}")
+        print(f"Frame {self.frame_index} fk_success list: {' '.join(mark_index(fk_success_list))}")
+        print(f"Frame {self.frame_index} consistent list: {' '.join(mark_index(fk_consistent_list))}")
 
     def next_orientation(self):
         n = len(self.reach_map.ik_map[self.frame_index]["success"])
@@ -73,7 +118,7 @@ class MeshcatMapViewer:
 
     def random_frame(self):
         self.frame_index = random.randint(0, self.reach_map.n_frames - 1)
-        self.orient_index = 0
+        # self.orient_index = 0
         self.display_current_pose()
 
     def increase_point_size(self, step=0.01):
@@ -85,6 +130,25 @@ class MeshcatMapViewer:
         self.size = max(0.001, self.size - step)
         print(f"Point size decreased to {self.size:.3f}")
         self.display_point_cloud()
+
+    def jump_to_nearest_inconsistent(self, forward=True):
+        start = self.frame_index
+        n = self.reach_map.n_frames
+
+        offset_range = range(1, n) if forward else range(-1, -n, -1)
+
+        for offset in offset_range:
+            idx = (start + offset) % n
+            fk_info = self.reach_map.fk_map[idx]
+            if np.any(~np.array(fk_info["consistent"]).astype(bool)):
+                self.frame_index = idx
+                # self.orient_index = 0
+                print(f"[!] Jumped to inconsistent frame {idx}")
+                self.display_current_pose()
+                return
+
+        print("[✓] No inconsistent frames found.")
+
     def run(self):
         from pynput import keyboard
 
@@ -94,6 +158,7 @@ class MeshcatMapViewer:
         print("  [↑ / ↓]    → Previous / Next frame")
         print("  [+]        → Increase point size")
         print("  [-]        → Decrease point size")
+        print("  [C]        → Toggle inconsistent mode (↑/↓ jump to nearest bad frame)")
         print("  [Q / Esc]  → Quit")
 
         def on_press(key):
@@ -105,13 +170,19 @@ class MeshcatMapViewer:
             if k == "space":
                 self.random_frame()
             elif k == 'up':
-                self.frame_index = (self.frame_index + 1) % self.reach_map.n_frames
-                self.orient_index = 0
-                self.display_current_pose()
+                if self.inconsistent_mode:
+                    self.jump_to_nearest_inconsistent(forward=True)
+                else:
+                    self.frame_index = (self.frame_index + 1) % self.reach_map.n_frames
+                    # self.orient_index = 0
+                    self.display_current_pose()
             elif k == 'down':
-                self.frame_index = (self.frame_index - 1) % self.reach_map.n_frames
-                self.orient_index = 0
-                self.display_current_pose()
+                if self.inconsistent_mode:
+                    self.jump_to_nearest_inconsistent(forward=False)
+                else:
+                    self.frame_index = (self.frame_index - 1) % self.reach_map.n_frames
+                    # self.orient_index = 0
+                    self.display_current_pose()
             elif k == 'right':
                 self.next_orientation()
             elif k == 'left':
@@ -120,6 +191,11 @@ class MeshcatMapViewer:
                 self.increase_point_size()
             elif k in ['-', '_']:
                 self.decrease_point_size()
+
+            elif k in ['c', 'C']:
+                self.inconsistent_mode = not self.inconsistent_mode
+                print(f"Inconsistent mode {'ON' if self.inconsistent_mode else 'OFF'}")
+                
             elif k in ['q', 'Q', 'esc']:
                 print("Exiting viewer...")
                 return False  # Stop listener
@@ -131,16 +207,20 @@ if __name__ == "__main__":
     from bam_kinematics_dynamics import urdf_to_models
 
     from bam_reachability.reachability_map import ReachabilityMap
-    from bam_reachability.visualizer import colorize_map
+    from bam_reachability.visualizer import colorize_map, colorize_inconsistency
     from bam_descriptions import get_robot_params
     import pinocchio as pin
-
-    map_path = "/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur_moveit_map_13_jun_2025.pkl"
+    # map_path = "/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur_moveit_map_13_jun_2025.pkl"
+    map_path = "/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur_offset_wrist_map_13_jun_2025.pkl"
+    map_path = "/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur_inconsistent_offset_wrist_map_13_jun_2025.pkl"
+    map_path="/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur_inconsistent_offset_wrist_map_14_jun_2025.pkl"
+    map_path="/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur_table_offset_wrist_map_14_jun_2025.pkl"
     # Load reachability map
     rmap = ReachabilityMap.load(map_path)
 
     # Get colorized point cloud
-    frames, colors = colorize_map(rmap, histogram=False)
+    frames, colors = colorize_map(rmap, histogram=True)
+    # points, colors = colorize_inconsistency(rmap)
 
 
     rp = get_robot_params('ur')

@@ -15,13 +15,30 @@ Todo
 
 Kinematics
 - [X] Verify Mock Kinematics
-- [ ] Verify Moveit Kinematics
-- [ ] Verify Offset Wrist Kinematics
-- [ ] Verify Pinnochio Kinematics
+    Learnings:
+        - Nice to have control over when it succeeds and fails
+- [X] Verify Moveit Kinematics
+    Learnings:
+        - RCLPY is very slow, after around 500 calls hits 100% CPU usage (check with HTOP), and really slows down
+        - Making lots of calls with rclpy.spin_until_future_complete() doesn't seem like a good idea.
+        - Adding wait timers, etc, I couldn't improve it
+        - It's an open issue: 
+- [X] Verify Offset Wrist Kinematics
+    Learnings:
+        - Inconsitent IK/FK due to numerical instability it seems when poses are too perfectly aligned
+        - Making hemisphere 89 deg, using random poses, etc solves the problem
+        - I do think its ok to fail and understand why it fails, I think its also important to achieve a state with no errors, thats a special state
+- [X] Verify Pinnochio Kinematics
+    Learnings:
+        - Nice benefit of modular IK/FK is that I can provide the FK from pin and IK from Offset wrist
 
 Analysis 
-- [ ] Run full analysis for Mock Robot
-- [ ] Run full + table analysis for UR robot
+- [X] Run full analysis for Mock Robot
+- [X] Run full + table analysis for UR robot
+    Learnings:
+        - Table analysis is really, really awesome and powerful. I like how I can completely were there are solutions now etc
+        - I don't think I actually need to do anything more here... if I load up the table transform, then I can just analyze it
+          seperatly in mesh cat, and walk through all the different poses, etc.. I think this is much more powerful..
 - [ ] Run full + table analysis for BAM robot
 
 Bounds

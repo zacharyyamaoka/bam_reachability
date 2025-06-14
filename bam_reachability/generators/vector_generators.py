@@ -187,7 +187,7 @@ def view_generator(inital_view=[0, 0, 1], hemisphere_angle=np.deg2rad(40), view_
 # See similar func in tf_transformation 
 # def euler_from_matrix(matrix, axes='sxyz'):
 
-def R_to_rpy(R_input, axes='sxyz'):
+def matrix_to_rpy(R_input, axes='sxyz'):
     if isinstance(R_input, list) or (isinstance(R_input, np.ndarray) and R_input.ndim == 3):
         return [mat2euler(R, axes) for R in R_input]
     else:
@@ -315,8 +315,16 @@ if __name__ == "__main__":
     #     step_angle_rad=np.deg2rad(30)
     # )
     # visualize_vectors(vectors)
-    # print(np.round(vectors,3))
+    # print(np.round(vectors,3)) # check no repeats
     # print(vectors.shape)
+
+
+    vectors = generate_deviation_vectors(
+        axis=(0, 0, -1),  # z-axis (this is what you want to table picking)
+        max_angle_rad=np.deg2rad(0),  # 90 degree cone
+        step_angle_rad=np.deg2rad(30)
+    )
+    assert len(vectors) == 1 
 
     #2. Orthogonal Vectors (aka on axis rotation)
 
@@ -356,25 +364,25 @@ if __name__ == "__main__":
     # Very cool you will see it first go straight up
     # and then it goes 45 degs down, and spins around
     # then it goes another 45 down to 90, and spins around 
-    R_list = view_generator(
-        inital_view=[0, 0, 1],
-        hemisphere_angle=np.deg2rad(90),
-        view_step=np.deg2rad(45),
-        rotation_step=np.deg2rad(360)
-    )
-    print("Num R: ", len(R_list))
-    print("Press [esc] inside viewer to step through views")
-    print("Large frame is staionary world frame")
-    for R in R_list:
-        visualize_frames(R, scale=0.05)
+    # R_list = view_generator(
+    #     inital_view=[0, 0, 1],
+    #     hemisphere_angle=np.deg2rad(90),
+    #     view_step=np.deg2rad(45),
+    #     rotation_step=np.deg2rad(360)
+    # )
+    # print("Num R: ", len(R_list))
+    # print("Press [esc] inside viewer to step through views")
+    # print("Large frame is staionary world frame")
+    # for R in R_list:
+    #     visualize_frames(R, scale=0.05)
 
-    # Now in axis rotation is set to 45, you will see it stay on a certain z view for 8 steps
-    # and the x and y axis will change. Keep your eyes on the blue z axis
-    R_list = view_generator(
-        inital_view=[0, 0, 1],
-        hemisphere_angle=np.deg2rad(90),
-        view_step=np.deg2rad(45),
-        rotation_step=np.deg2rad(45)
-    )
-    for R in R_list:
-        visualize_frames(R, scale=0.05)
+    # # Now in axis rotation is set to 45, you will see it stay on a certain z view for 8 steps
+    # # and the x and y axis will change. Keep your eyes on the blue z axis
+    # R_list = view_generator(
+    #     inital_view=[0, 0, 1],
+    #     hemisphere_angle=np.deg2rad(90),
+    #     view_step=np.deg2rad(45),
+    #     rotation_step=np.deg2rad(45)
+    # )
+    # for R in R_list:
+    #     visualize_frames(R, scale=0.05)

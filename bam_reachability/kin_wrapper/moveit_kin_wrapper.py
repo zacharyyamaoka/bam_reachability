@@ -176,6 +176,7 @@ if __name__ == '__main__':
     success_count = 0
 
     for i in range(num_tests):
+        print(f"iter {i}/{num_tests}")
         q_rand = np.random.uniform(lower_bounds, upper_bounds)
         fk_success, q_rand_pose = K.FK(q_rand)
         if not fk_success:

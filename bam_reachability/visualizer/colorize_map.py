@@ -4,7 +4,43 @@ import numpy as np
 import matplotlib.pyplot as plt
 from bam_reachability.reachability_map import ReachabilityMap
 
-def colorize_map(map: ReachabilityMap, min_threshold=0.2, max_threshold=0.95, n_bins=5, histogram=True):
+def colorize_inconsistency(map: ReachabilityMap, plot_histogram=True):
+    """
+    Returns (frames, colors) where:
+    - Inconsistent FK/IK frames are colored black (0, 0, 0, 1)
+    - Consistent frames are colored green (0, 1, 0, 1)
+
+    Optionally plots a histogram of the number of inconsistent orientations per frame.
+    """
+    n = map.n_frames
+    colors = np.zeros((n, 4))  # RGBA
+    inconsistency_counts = np.zeros(n, dtype=int)
+
+    for i in range(n):
+        consistent = np.array(map.fk_map[i]["consistent"]).astype(bool)
+        n_inconsistent = np.sum(~consistent)
+        inconsistency_counts[i] = n_inconsistent
+
+        if n_inconsistent > 0:
+            colors[i] = [0.0, 0.0, 0.0, 1.0]  # Black
+        else:
+            colors[i] = [0.0, 1.0, 0.0, 1.0]  # Green
+
+    if plot_histogram:
+        plt.figure(figsize=(8, 4))
+        bins = np.arange(0, map.n_orientations + 2) - 0.5  # Center bins
+        plt.hist(inconsistency_counts, bins=bins, edgecolor='black', color='darkred')
+        plt.xticks(np.arange(0, map.n_orientations + 1))
+        plt.xlabel("Number of Inconsistent Orientations per Frame")
+        plt.ylabel("Number of Frames")
+        plt.title("Histogram of FK/IK Inconsistencies")
+        plt.grid(True, linestyle='--', alpha=0.5)
+        plt.tight_layout()
+        plt.show()
+
+    return map.frames, colors
+
+def colorize_map(map: ReachabilityMap, min_threshold=0.2, max_threshold=1.0, n_bins=5, histogram=True):
     """
     Return (frames, colors) where colors is (N, 4) RGBA array:
     - Blue = highly reachable
@@ -14,7 +50,12 @@ def colorize_map(map: ReachabilityMap, min_threshold=0.2, max_threshold=0.95, n_
     If histogram=True, shows:
     - Raw score histogram
     - Binned score bar chart with readable bin labels
+
+    You cannot have max_threshold = 1.0 otherwise the bin has no space inside of it!
     """
+
+    if max_threshold == 1.0:
+        max_threshold -= 0.0000001
 
     n_bins = n_bins - 2 # for the start and end ones
     scores = np.array([np.mean(info["success"]) for info in map.ik_map])  # (N,)
@@ -30,6 +71,7 @@ def colorize_map(map: ReachabilityMap, min_threshold=0.2, max_threshold=0.95, n_
         bin_edges = [0.0]  # start from 0
         for i in range(n_bins+1):
             bin_edges.append(min_threshold + i * bin_step)
+        
         bin_edges.append(1.0)  # always end at 1.0
         print("Bin Edges: ", bin_edges)
 
@@ -49,7 +91,8 @@ def colorize_map(map: ReachabilityMap, min_threshold=0.2, max_threshold=0.95, n_
         bin_id_float[bin_id_float == -1] = 0  # ignore unreachable for color mapping
         norm_vals = np.clip(bin_id_float / max(n_bins, 1), 0.0, 1.0)
 
-        cmap = plt.get_cmap("coolwarm_r")
+        # https://matplotlib.org/stable/users/explain/colors/colormaps.html
+        cmap = plt.get_cmap("RdYlGn")
         rgba = cmap(norm_vals[reachable_mask])
         colors[reachable_mask, :3] = rgba[:, :3]
         colors[reachable_mask, 3] = 1.0
