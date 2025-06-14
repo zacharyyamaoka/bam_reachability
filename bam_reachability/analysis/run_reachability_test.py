@@ -33,7 +33,6 @@ import numpy as np
 from bam_reachability.reachability_map import ReachabilityMap
 from bam_reachability.visualizer import AlignedSlicer, colorize_map # Optional visualization
 from bam_reachability.compare_maps import compare_map 
-from bam_reachability.kinematics import MockKin  # Fill in with your actual functions
 from typing import Callable
 
 
@@ -126,8 +125,9 @@ def run_reachability_test(
 
 
 if __name__ == "__main__":
+    from bam_reachability.kin_wrapper import MockKinWrapper  # Fill in with your actual functions
 
-    K = MockKin(L1=0.3, L2=0.3) # this needs to be the same as the orginal map or it will fail!
+    K = MockKinWrapper(L1=0.3, L2=0.3) # this needs to be the same as the orginal map or it will fail!
     
     map_path = "/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/mock/mock_map_13_jun_2025.pkl"
     run_reachability_test(

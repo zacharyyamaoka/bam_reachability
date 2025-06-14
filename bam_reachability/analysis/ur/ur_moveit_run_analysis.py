@@ -50,7 +50,7 @@ import rclpy
 # BAM
 from bam_reachability.generators import rectangular_generator, generate_deviation_vectors, visualize_vectors
 from bam_reachability.visualizer import AlignedSlicer
-from bam_reachability.kinematics import MoveItKin
+from bam_reachability.kin_wrapper import MoveItKin
 
 from bam_reachability.reachability_map import ReachabilityMap
 

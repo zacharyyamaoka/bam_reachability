@@ -25,6 +25,7 @@ class ReachabilityMap():
 
         assert frames.ndim == 2 and frames.shape[1] == 3  # shape: (N, 3)
         self.frames = frames 
+        self.n_frames = self.frames.shape[0]
 
         if orientations.ndim == 3:
             assert orientations.shape[0] == frames.shape[0], "Mismatch in number of frames"
@@ -38,8 +39,7 @@ class ReachabilityMap():
 
         self.orientations = orientations
 
-        self.n_frames = self.frames.shape[0]
-        self.n_orientations = self.orientations.shape[0]
+
         self.total_count = self.n_frames * self.n_orientations
 
 
@@ -175,6 +175,7 @@ class ReachabilityMap():
         data = {
             "frames": self.frames,
             "orientations": self.orientations,
+            "per_frame_orientations": self.per_frame_orientations,  # <-- NEW
             "ik_map": self.ik_map,
             "fk_map": self.fk_map,
         }
@@ -190,11 +191,12 @@ class ReachabilityMap():
         obj = ReachabilityMap.__new__(ReachabilityMap)
         obj.frames = data["frames"]
         obj.orientations = data["orientations"]
+        obj.per_frame_orientations = data.get("per_frame_orientations", False)  # <-- NEW (fallback to False)
         obj.ik_map = data["ik_map"]
         obj.fk_map = data["fk_map"]
 
         obj.n_frames = obj.frames.shape[0]
-        obj.n_orientations = obj.orientations.shape[0]
+        obj.n_orientations = (obj.orientations.shape[1] if obj.per_frame_orientations else obj.orientations.shape[0])
         obj.total_count = obj.n_frames * obj.n_orientations
 
         obj.IK = IK

@@ -50,8 +50,8 @@ class MeshcatMapViewer:
             print(f"[✓] Displaying frame {self.frame_index}, orientation {self.orient_index}")
         else:
             # Try to find next successful orientation
-            for i in range(self.reach_map.n_orientations):
-                next_idx = (self.orient_index + i) % self.reach_map.n_orientations
+            for i in range(len(success_list)):
+                next_idx = (self.orient_index + i) % len(success_list)
                 if success_list[next_idx]:
                     self.orient_index = next_idx
                     q = ik_info["ik_sols"][self.orient_index]
@@ -61,11 +61,14 @@ class MeshcatMapViewer:
             print(f"[✗] No valid IK solutions for frame {self.frame_index}")
 
     def next_orientation(self):
-        self.orient_index = (self.orient_index + 1) % self.reach_map.n_orientations
+        n = len(self.reach_map.ik_map[self.frame_index]["success"])
+        self.orient_index = (self.orient_index + 1) % n
         self.display_current_pose()
+     
 
     def prev_orientation(self):
-        self.orient_index = (self.orient_index - 1) % self.reach_map.n_orientations
+        n = len(self.reach_map.ik_map[self.frame_index]["success"])
+        self.orient_index = (self.orient_index - 1) % n
         self.display_current_pose()
 
     def random_frame(self):
@@ -132,8 +135,9 @@ if __name__ == "__main__":
     from bam_descriptions import get_robot_params
     import pinocchio as pin
 
+    map_path = "/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur_moveit_map_13_jun_2025.pkl"
     # Load reachability map
-    rmap = ReachabilityMap.load("/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur/ur_offset_wrist_map_13_jun_2025.pkl")
+    rmap = ReachabilityMap.load(map_path)
 
     # Get colorized point cloud
     frames, colors = colorize_map(rmap, histogram=False)

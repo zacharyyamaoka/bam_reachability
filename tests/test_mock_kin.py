@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from bam_reachability.kinematics import MockKin  # Fill in with your actual functions
+from bam_reachability.kin_wrapper import MockKinWrapper  # Fill in with your actual functions
 from bam_reachability.analysis.run_reachability_test import run_reachability_test
 
 import pytest
@@ -10,10 +10,10 @@ from typing import Callable
 OLD_MOCK_MAP_PATH = "/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/mock/mock_map_13_jun_2025.pkl"
 
 def test_mock_kin_same():
-    K = MockKin(L1=0.3, L2=0.3) # this needs to be the same as the orginal map or it will fail!
+    K = MockKinWrapper(L1=0.3, L2=0.3) # this needs to be the same as the orginal map or it will fail!
 
     run_reachability_test(
-        name="MockKin Expecting Success",
+        name="MockKinWrapper Expecting Success",
         IK=K.IK,
         FK=K.FK,
         IK_ALT=K.IK,  # Replace with alternate IK if available
@@ -29,11 +29,11 @@ def test_mock_kin_same():
     )
 
 def test_mock_diff_l():
-    K = MockKin(L1=0.3, L2=0.3) # this needs to be the same as the orginal map or it will fail!
-    K_DIFF_L = MockKin(L1=0.5, L2=0.5) # this needs to be the same as the orginal map or it will fail!
+    K = MockKinWrapper(L1=0.3, L2=0.3) # this needs to be the same as the orginal map or it will fail!
+    K_DIFF_L = MockKinWrapper(L1=0.5, L2=0.5) # this needs to be the same as the orginal map or it will fail!
 
     run_reachability_test(
-        name="MockKin Different Link Lengths",
+        name="MockKinWrapper Different Link Lengths",
         IK=K.IK,
         FK=K.FK,
         IK_ALT=K_DIFF_L.IK,  # Replace with alternate IK if available
@@ -49,10 +49,10 @@ def test_mock_diff_l():
     )
 
 def test_mock_no_reset():
-    K = MockKin(L1=0.3, L2=0.3) # this needs to be the same as the orginal map or it will fail!
+    K = MockKinWrapper(L1=0.3, L2=0.3) # this needs to be the same as the orginal map or it will fail!
 
     run_reachability_test(
-        name="MockKin No Reset",
+        name="MockKinWrapper No Reset",
         IK=K.IK,
         FK=K.FK,
         IK_ALT=K.IK,  # Replace with alternate IK if available
@@ -69,10 +69,10 @@ def test_mock_no_reset():
 
 def test_mock_diff_seed():
 
-    K_DIFF_SEED = MockKin(L1=0.3, L2=0.3, seed=1) 
+    K_DIFF_SEED = MockKinWrapper(L1=0.3, L2=0.3, seed=1) 
 
     run_reachability_test(
-        name="MockKin Different Seed",
+        name="MockKinWrapper Different Seed",
         IK=K_DIFF_SEED.IK,
         FK=K_DIFF_SEED.FK,
         IK_ALT=K_DIFF_SEED.IK,  # Replace with alternate IK if available

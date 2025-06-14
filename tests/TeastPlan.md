@@ -1,5 +1,8 @@
 
 
+### CLI 
+
+
 I will test for the mock kinematics in here.
 
 - I will implement the moveit/pin kinematics here with the * that they require thoose packages

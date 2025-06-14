@@ -4,6 +4,13 @@
 - The most important thing is moveit, as that is what is actually is called
 - If I want to use the other packages though freely I should also verify they are correct!
 
+- I initally want to develop this to be a purely standalone python library.
+- I am now changing pace a bit and I will make it use ROS msgs types
+- The disadvantage is that now it cannot really standalone. 
+- The adventage is that this package is actually quite integral! and its better to use the same languague!
+
+- FML I couldn't do it! As I started convert to ROS, I couldn't bring my self to make this beutiful pure python package be filled with these ROS utils...
+
 Todo
 
 Kinematics

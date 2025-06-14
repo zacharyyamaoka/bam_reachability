@@ -22,6 +22,7 @@ def compare_map(map_1: ReachabilityMap, map_2: ReachabilityMap):
 
     assert map_1.n_frames == map_2.n_frames
     assert map_1.n_orientations == map_2.n_orientations
+    assert map_1.per_frame_orientations == map_2.per_frame_orientations
 
     diff_map = []
 
@@ -51,10 +52,17 @@ def compare_map(map_1: ReachabilityMap, map_2: ReachabilityMap):
 
             # Check frame poses are the same. 
             # Important that inputs are the same, or outputs are not likely to be!
-            orientation_1 = orientations_1[j,:] # shape (3,)
-            orientation_2 = orientations_2[j,:] # shape (3,)
-            pose_1 = np.hstack((frame_1, orientation_1)) # shape (6,)
-            pose_2 = np.hstack((frame_2, orientation_2)) # shape (6,)
+
+            if map_1.per_frame_orientations:
+                orientation_1 = orientations_1[i, j]
+                orientation_2 = orientations_2[i, j]
+            else:
+                orientation_1 = orientations_1[j] # shape (3,)
+                orientation_2 = orientations_2[j] # shape (3,)
+
+            pose_1 = np.hstack((frame_1, orientation_1.reshape(-1))) # shape (6,)
+            pose_2 = np.hstack((frame_2, orientation_2.reshape(-1))) # shape (6,)
+
             diff_info["pose_success"][j] = pose_is_close(pose_1, pose_2)
 
             # Check IK results are the Same
