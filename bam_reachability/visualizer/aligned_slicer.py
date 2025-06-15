@@ -125,16 +125,16 @@ class AlignedSlicer:
 # Example usage
 if __name__ == "__main__":
 
-    from bam_reachability.generators import donut_generator, rectangular_generator, spherical_generator
+    from bam_reachability.generators import donut_point_generator, rectangle_point_generator, sphere_point_generator
 
 
-    points = rectangular_generator(scale=(1.0, 1.0, 1.0), step=0.1)
-    points = spherical_generator(diameter=1.0, step=0.1, sign=1)
-    points = donut_generator(inner_diameter=0.5, outer_diameter=1.0, step=0.02)
+    points = rectangle_point_generator(scale=(1.0, 1.0, 1.0), step=0.1)
+    points = sphere_point_generator(diameter=1.0, step=0.1, sign=1)
+    points = donut_point_generator(inner_diameter=0.5, outer_diameter=1.0, step=0.02)
 
     colors = None
     if False:
-        points = donut_generator(inner_diameter=0.3, outer_diameter=1.0, step=0.02)
+        points = donut_point_generator(inner_diameter=0.3, outer_diameter=1.0, step=0.02)
 
         # Step 1: Compute XYZ radial distance from origin
         r = np.linalg.norm(points, axis=1)

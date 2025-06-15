@@ -31,7 +31,8 @@ class MockKinWrapper():
         self.seed = seed
         self.rng = np.random.default_rng(seed)  # create a per-instance random generator
         self.random_ik_fail = random_ik_fail
-    
+        self.name = "mock"
+
     def seed_reset(self):
         """Reset the RNG to the original seed."""
         self.rng = np.random.default_rng(self.seed)
@@ -137,10 +138,10 @@ def rr_ik(L1, L2, x, y):
 
 
 if __name__ == '__main__':
-    from bam_reachability.generators import rectangular_generator, generate_deviation_vectors
+    from bam_reachability.generators import rectangle_point_generator, generate_deviation_vectors
 
 
-    frames = rectangular_generator(scale=(1, 1, 1), step=0.05)
+    frames = rectangle_point_generator(scale=(1, 1, 1), step=0.05)
     orientations = generate_deviation_vectors([0,0,1], np.deg2rad(180), np.deg2rad(30))
     print("Frame: ", frames.shape)
     print("Orientation: ", orientations.shape)

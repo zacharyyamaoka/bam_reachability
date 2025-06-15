@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
 
-import numpy as np
-import open3d as o3d
-from transforms3d.quaternions import rotate_vector, axangle2quat
-from transforms3d.euler import mat2euler
-
-from typing import Tuple
-
 """
 Inspired by:
 https://github.com/compas-dev/compas_fab/blob/main/src/compas_fab/robots/reachability_map/vector_generators.py
@@ -46,6 +39,12 @@ Ok what I want to do for the IK testing is a bit different beacuse I don't care 
 See how COMPAS generates frames: https://github.com/compas-dev/compas_fab/blob/005e2680385b80c7f0bd4dfd30d080fd2c135467/tests/robots/test_reachability.py#L42
 
 """
+
+import numpy as np
+import open3d as o3d
+from transforms3d.quaternions import rotate_vector, axangle2quat
+
+from typing import Tuple, List
 
 
 def normalize(v):
@@ -118,6 +117,7 @@ def generate_deviation_vectors(axis=[0,0,1], max_angle_rad=np.deg2rad(180), step
         List of np.ndarray unit vectors.
     """
     axis = normalize(np.array(axis))
+    print("AXIS: ", axis)
     vectors = [axis]
 
     if max_angle_rad == 0:
@@ -148,7 +148,7 @@ def generate_deviation_vectors(axis=[0,0,1], max_angle_rad=np.deg2rad(180), step
 
 
 #
-def view_generator(inital_view=[0, 0, 1], hemisphere_angle=np.deg2rad(40), view_step=np.deg2rad(10), rotation_step=np.deg2rad(60)) -> list:
+def view_generator(inital_view=[0, 0, 1], hemisphere_angle=np.deg2rad(40), view_step=np.deg2rad(10), rotation_step=np.deg2rad(60)) -> List[np.ndarray]:
     """
     Generate a set of rotation matrices representing different viewing directions and in-plane rotations.
 
@@ -184,14 +184,6 @@ def view_generator(inital_view=[0, 0, 1], hemisphere_angle=np.deg2rad(40), view_
 
     return R_list
 
-# See similar func in tf_transformation 
-# def euler_from_matrix(matrix, axes='sxyz'):
-
-def matrix_to_rpy(R_input, axes='sxyz'):
-    if isinstance(R_input, list) or (isinstance(R_input, np.ndarray) and R_input.ndim == 3):
-        return [mat2euler(R, axes) for R in R_input]
-    else:
-        return mat2euler(R_input, axes)
 
 def visualize_vectors(vectors, scale=0.2):
     geometries = []

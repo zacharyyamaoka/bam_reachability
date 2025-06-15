@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from bam_reachability.generators import rectangular_generator, view_generator, visualize_frames, matrix_to_rpy
+from bam_reachability.generators import rectangle_point_generator, view_generator, visualize_frames, matrix_to_rpy
 from bam_reachability.visualizer import AlignedSlicer
 from bam_reachability.kin_wrapper import MockKin
 
@@ -9,7 +9,7 @@ from bam_reachability.reachability_map import ReachabilityMap
 import numpy as np
 import os
 
-positions = rectangular_generator(scale=(1, 1, 1), step=0.2)
+positions = rectangle_point_generator(scale=(1, 1, 1), step=0.2)
 
 R_list = view_generator(
     inital_view=[0, 0, -1],
@@ -20,7 +20,7 @@ R_list = view_generator(
 
 # visualize_frames(R_list, only_z=True)
 
-orientations = np.array(matrix_to_rpy(R_list))
+orietnations = [matrix_to_rpy(R) for R in R_list]
 
 print("Frames: ", positions.shape)
 print("Orientations: ", orientations.shape)

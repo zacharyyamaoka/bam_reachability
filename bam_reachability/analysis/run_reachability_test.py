@@ -32,7 +32,7 @@ Careful!!!!! This will fail with the mock unless you seed it properly!!
 import numpy as np
 from bam_reachability.reachability_map import ReachabilityMap
 from bam_reachability.visualizer import AlignedSlicer, colorize_map # Optional visualization
-from bam_reachability.compare_maps import compare_map 
+from bam_reachability.analysis.compare_maps import compare_map 
 from typing import Callable
 
 

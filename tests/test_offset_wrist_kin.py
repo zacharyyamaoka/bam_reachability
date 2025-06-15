@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from bam_descriptions import get_robot_params
 from bam_reachability.kin_wrapper import OffsetWristKinWrapper, PinKinWrapper  # Fill in with your actual functions
 from bam_reachability.analysis.run_reachability_test import run_reachability_test
 
@@ -8,7 +9,8 @@ OLD_MAP_PATH = "/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachabili
 
 
 def test_offset_wrist_kin():
-    K_OFFSET = OffsetWristKinWrapper(arm="ur")
+    rp = get_robot_params("ur")
+    K_OFFSET = OffsetWristKinWrapper(rp, use_tool0=True)
     K_PIN = PinKinWrapper(arm="ur", verbose=False)
     run_reachability_test(
         name="Offset WRist",

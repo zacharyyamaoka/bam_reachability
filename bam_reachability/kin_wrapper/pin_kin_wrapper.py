@@ -39,6 +39,7 @@ class PinKinWrapper():
         # self.K = PinKinematics(model, rp.base_link, rp.ik_tip, verbose) # it can do the transform for me! which is helpful to confirm
 
         self.robot_params = rp
+        self.name = rp.name + "_pin"
 
 
     def IK(self, pose: np.ndarray)-> Tuple[bool, np.ndarray]:

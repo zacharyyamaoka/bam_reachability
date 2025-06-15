@@ -13,7 +13,7 @@ from rclpy.logging import LoggingSeverity
 from tf_transformations import euler_from_quaternion
 
 # BAM
-from bam_descriptions import get_robot_params
+from bam_descriptions import get_robot_params, RobotParam
 from bam_moveit_client import MoveItClient
 from bam_ros_utils.msgs import get_joint_state, get_pose_stamped
 from bam_ros_utils.np_helper import to_numpy_xyzrpy
@@ -31,13 +31,12 @@ import numpy as np
 
 class OffsetWristKinWrapper():
     
-    def __init__(self, arm="ur", use_tool0=True):
-
-        rp = get_robot_params(arm)
+    def __init__(self, rp: RobotParam, use_tool0=True):
 
         # Limits can also be read from URDF, but this is nice because no other dependecies...
         self.K = OffsetWristKinematics(rp.dh_list, rp.base_link, rp.lower_limits, rp.upper_limits, use_tool0=use_tool0, verbose=False)
         self.robot_params = rp
+        self.name = rp.name + "_offset"
     
     def IK(self, pose: np.ndarray)-> Tuple[bool, np.ndarray]:
 
@@ -60,8 +59,8 @@ class OffsetWristKinWrapper():
 
 if __name__ == '__main__':
 
-    K = OffsetWristKinWrapper(arm="ur")
-
+    rp = get_robot_params("ur")
+    K = OffsetWristKinWrapper(rp, use_tool0=True)
     lower_bounds = K.robot_params.lower_limits
     upper_bounds = K.robot_params.upper_limits
 

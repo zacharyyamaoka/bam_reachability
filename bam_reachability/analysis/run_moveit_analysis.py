@@ -48,7 +48,7 @@ Using rclpy wait for future, does not seem to be a very peformant option! good f
 import rclpy
 
 # BAM
-from bam_reachability.generators import rectangular_generator, generate_deviation_vectors, visualize_vectors
+from bam_reachability.generators import rectangle_point_generator, generate_deviation_vectors, visualize_vectors
 from bam_reachability.visualizer import AlignedSlicer
 from bam_reachability.kin_wrapper import MoveItKinWrapper
 
@@ -64,7 +64,7 @@ arm_name = "ur"
 
 # 1. Generate Frames
 
-positions = rectangular_generator(scale=(1, 1, 1), step=0.3)
+positions = rectangle_point_generator(scale=(1, 1, 1), step=0.3)
 
 # Beacuse it takes so long I can only test 1 orientation
 n_orientations = 1

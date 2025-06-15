@@ -1,13 +1,75 @@
 #!/usr/bin/env python3
 
 import numpy as np
-from transforms3d.euler import euler2quat, euler2mat
+from transforms3d.euler import euler2quat, euler2mat, mat2euler
+from transforms3d.quaternions import quat2mat
+import os
 
+def make_map_path(curr__file__, arm_name, kinematic_name, generator_name) -> str:
+    
+    current = os.path.abspath(curr__file__)
+    parent1 = os.path.dirname(current)
+    parent2 = os.path.dirname(parent1)
+    parent3 = os.path.dirname(parent2)
+
+    base_dir = parent3
+    file_path = os.path.join(base_dir, 'maps', arm_name, f'{kinematic_name}_{generator_name}_map')
+    print("Created file path: ", file_path)
+
+    return file_path
+
+def get_matrix(pose) -> np.ndarray:
+    """
+    Convert various pose formats to a 4x4 transformation matrix.
+
+    Supported inputs:
+    - (6,) array-like: [x, y, z, roll, pitch, yaw]
+    - (7,) array-like: [x, y, z, qx, qy, qz, qw]
+    - (3, 3) ndarray: Rotation matrix
+    - (4, 4) ndarray: Transformation matrix
+    - Tuple/list of two arrays: ([x, y, z], [roll, pitch, yaw])
+    """
+    if isinstance(pose, (list, tuple)) and len(pose) == 2:
+        # ([x, y, z], [r, p, y])
+        xyz, rpy = np.asarray(pose[0]), np.asarray(pose[1])
+        if xyz.shape == (3,) and rpy.shape == (3,):
+            return xyzrpy_to_matrix(xyz, rpy)
+
+    if pose.shape == (6,):
+        xyz, rpy = pose[:3], pose[3:]
+        return xyzrpy_to_matrix(xyz, rpy)
+
+    elif pose.shape == (7,):
+        xyz = pose[:3]
+        quat = pose[3:]  # [qx, qy, qz, qw]
+        mat = np.eye(4)
+        mat[:3, :3] = quat2mat(quat)
+        mat[:3, 3] = xyz
+        return mat
+
+    elif pose.shape == (3, 3):
+        mat = np.eye(4)
+        mat[:3, :3] = pose
+        return mat
+
+    elif pose.shape == (4, 4):
+        return pose
+
+    else:
+        raise ValueError(f"Unsupported pose format or shape: {pose}")
+    
+# Helpful utils for working with numpy poses.. for using ROS msgs, see bam_ros_utils.msgs and 
 def xyzrpy_to_matrix(xyz, rpy):
     mat = np.eye(4)
     mat[:3, :3] = euler2mat(*rpy)  # rotation
     mat[:3, 3] = xyz               # translation
     return mat
+
+# See similar func in tf_transformation 
+# def euler_from_matrix(matrix, axes='sxyz'):
+
+def matrix_to_rpy(matrix, axes='sxyz'):
+    return mat2euler(matrix, axes)
 
 def quats_equal_up_to_sign(rpy1, rpy2, tol=1e-6, verbose=False):
     """

@@ -4,6 +4,7 @@ import numpy as np
 from typing import Callable, Optional
 import pickle
 import datetime  # Add this at the top if not already
+import os  
 
 from bam_reachability.utils import pose_is_close
 
@@ -170,6 +171,10 @@ class ReachabilityMap():
                 file_path = file_path[:-4] + f"_{date_str}.pkl"
             else:
                 file_path = file_path + f"_{date_str}.pkl"
+
+        dir_path = os.path.dirname(file_path)
+        if not os.path.exists(dir_path):
+            raise FileNotFoundError(f"[Error] Save directory does not exist: {dir_path}")
 
         data = {
             "frames": self.frames,

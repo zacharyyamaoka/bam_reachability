@@ -1,12 +1,14 @@
+#!/usr/bin/env python3
+
 import numpy as np
 import open3d as o3d
 
-def table_workspace_generator(pose_matrix, scale=(1.0, 0.5, 0.2), step=0.1) -> np.ndarray:
+def table_point_generator(pose_matrix, scale=(1.0, 0.5, 0.2), step=0.1) -> np.ndarray:
     """
     Pose is for the center surface of table, should be with respect to the ik base_frame of robot
     Scale is center on +-x, +-y but just +z (as you cannot go into the table)
     """
-    local_points = rectangular_generator(scale=(scale[0], scale[1], scale[2]), step=step)
+    local_points = rectangle_point_generator(scale=(scale[0], scale[1], scale[2]), step=step)
 
     # Manually offset Z up so the box is from 0 to +scale[2] instead of centered
     local_points[:, 2] += scale[2] / 2.0
@@ -18,7 +20,7 @@ def table_workspace_generator(pose_matrix, scale=(1.0, 0.5, 0.2), step=0.1) -> n
     return world_points_h[:, :3]
 
 
-def rectangular_generator(scale=(1.0, 1.0, 1.0), step=0.1) -> np.ndarray:
+def rectangle_point_generator(scale=(1.0, 1.0, 1.0), step=0.1) -> np.ndarray:
     x_range = np.arange(-scale[0] / 2, scale[0] / 2 + step, step)
     y_range = np.arange(-scale[1] / 2, scale[1] / 2 + step, step)
     z_range = np.arange(-scale[2] / 2, scale[2] / 2 + step, step)
@@ -38,17 +40,17 @@ def mask_sphere(points, diameter=1.0, sign=1):
     else:
         return points[distances > radius]
 
-def spherical_generator(diameter=1.0, step=0.1, sign=1):
-    points = rectangular_generator(scale=(diameter, diameter, diameter), step=step)
+def sphere_point_generator(diameter=1.0, step=0.1, sign=1):
+    points = rectangle_point_generator(scale=(diameter, diameter, diameter), step=step)
     return mask_sphere(points, diameter=diameter, sign=sign)
 
-def donut_generator(inner_diameter=0.1, outer_diameter=1.0, step=0.1):
-    all_points = rectangular_generator(scale=(outer_diameter, outer_diameter, outer_diameter), step=step)
+def donut_point_generator(inner_diameter=0.1, outer_diameter=1.0, step=0.1):
+    all_points = rectangle_point_generator(scale=(outer_diameter, outer_diameter, outer_diameter), step=step)
     outer_masked = mask_sphere(all_points, diameter=outer_diameter, sign=1)
     donut_points = mask_sphere(outer_masked, diameter=inner_diameter, sign=-1)
     return donut_points
 
-def visualize_points(points: np.ndarray, axis_length=0.1, pose_matrix: np.ndarray = None):
+def visualize_points(points: np.ndarray,  point_size=5.0, axis_length=0.1, pose_matrix: np.ndarray = None):
     """
     Visualize a point cloud with coordinate frame(s).
 
@@ -69,7 +71,17 @@ def visualize_points(points: np.ndarray, axis_length=0.1, pose_matrix: np.ndarra
         pose_frame.transform(pose_matrix)
         geometries.append(pose_frame)
 
-    o3d.visualization.draw_geometries(geometries)
+    # o3d.visualization.draw_geometries(geometries)
+    vis = o3d.visualization.Visualizer()
+    vis.create_window()
+    for g in geometries:
+        vis.add_geometry(g)
+
+    render_option = vis.get_render_option()
+    render_option.point_size = point_size
+
+    vis.run()
+    vis.destroy_window()
 
 def visualize_convex_hull(points: np.ndarray, axis_length=0.1):
     """
@@ -91,19 +103,19 @@ def visualize_convex_hull(points: np.ndarray, axis_length=0.1):
 if __name__ == "__main__":
 
     from bam_reachability.utils import xyzrpy_to_matrix
-    # sphere = spherical_generator(diameter=1.0, step=0.05)
+    # sphere = sphere_point_generator(diameter=1.0, step=0.05)
     # visualize_points(sphere)
     # visualize_convex_hull(sphere)
 
-    # donut = donut_generator(inner_diameter=0.4, outer_diameter=1.0, step=0.05)
+    # donut = donut_point_generator(inner_diameter=0.4, outer_diameter=1.0, step=0.05)
     # visualize_points(donut)
 
-    # rect = rectangular_generator(scale=(0.5, 0.5, 0.5), step=0.05)
+    # rect = rectangle_point_generator(scale=(0.5, 0.5, 0.5), step=0.05)
     # visualize_points(rect)
 
 
     pose_matrix = xyzrpy_to_matrix([0,0,0],[0,0,np.pi/4])
     # Using a step of 0.1 makes it easy to count!
-    points = table_workspace_generator(pose_matrix, scale=(1.0, 0.5, 0.2), step=0.1) 
+    points = table_point_generator(pose_matrix, scale=(1.0, 0.5, 0.2), step=0.1) 
 
     visualize_points(points, pose_matrix=pose_matrix)

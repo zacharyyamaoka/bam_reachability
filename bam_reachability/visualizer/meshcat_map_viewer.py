@@ -1,11 +1,26 @@
-import numpy as np
+#!/usr/bin/env python3
+
+# BAM
 from bam_kinematics_dynamics import MeshcatClient
 from bam_reachability.reachability_map import ReachabilityMap
+from bam_descriptions import RobotParam
+
+# PYTHON
+import numpy as np
 import pinocchio as pin
 import time
 import random
 
 class MeshcatMapViewer:
+
+    @classmethod
+    def from_robot_param(cls, map: ReachabilityMap, colors: np.ndarray, rp: RobotParam, size=0.05, meshcat_url=None):
+
+        model, collision_model, visual_model = pin.buildModelsFromUrdf(rp.urdf_path, rp.mesh_package_name)
+
+        return cls(map, colors, model, collision_model, visual_model,  size, meshcat_url)
+
+
     def __init__(self, reach_map: ReachabilityMap, colors: np.ndarray, model, collision_model, visual_model, size=0.05, meshcat_url=None):
         """
         Args:
@@ -210,13 +225,12 @@ if __name__ == "__main__":
     from bam_reachability.visualizer import colorize_map, colorize_inconsistency
     from bam_descriptions import get_robot_params
     import pinocchio as pin
-    # map_path = "/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur_moveit_map_13_jun_2025.pkl"
-    map_path = "/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur_offset_wrist_map_13_jun_2025.pkl"
-    map_path = "/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur_inconsistent_offset_wrist_map_13_jun_2025.pkl"
-    map_path="/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur_inconsistent_offset_wrist_map_14_jun_2025.pkl"
-    map_path="/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur_table_offset_wrist_map_14_jun_2025.pkl"
+
+    file_path ="/home/bam/bam_ws/src/bam_plugins/bam_reachability/maps/ur/ur_offset_table_1.0x0.5x0.2_0.10_85x42x360_map_15_jun_2025.pkl"
+
+
     # Load reachability map
-    rmap = ReachabilityMap.load(map_path)
+    rmap = ReachabilityMap.load(file_path)
 
     # Get colorized point cloud
     frames, colors = colorize_map(rmap, histogram=True)

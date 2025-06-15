@@ -77,11 +77,12 @@ class MoveItKinWrapper():
             node = Node('generic_node', namespace=ns)
         
         node.get_logger().set_level(LoggingSeverity.WARN)
-        self.moveit_client = MoveItClient(node, rp.move_group_arm, rp.base_link, rp.ik_tip, spin, mock_js=True)
+        self.moveit_client = MoveItClient(node, rp.move_group_arm, rp.base_link, rp.ik_tip, spin, mock_js_buffer=True)
         # self.rate = node.create_rate(50)  # 10 Hz = 0.1 sec You cannot use this beacuse nothing calls it!
 
         self.robot_params = rp
-    
+        self.name = rp.name + "_moveit"
+
     def IK(self, pose: np.ndarray, seed: np.ndarray = None )-> Tuple[bool, np.ndarray]:
         # Assumes poses are with respect to rp.base_link
         # Transform pose from tool0 (z sticks out of joint 6) to ee_link

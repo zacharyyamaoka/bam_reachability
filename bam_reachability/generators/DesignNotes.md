@@ -4,17 +4,17 @@ Recntgualr generator
     - Simple grid generator
 
 
-rectangular_generator(scale=(0.1,0.1,0.1), step=0.1)
+rectangle_point_generator(scale=(0.1,0.1,0.1), step=0.1)
 
 - Spherical Generator
 
 sphereical_generator(diameter(1), step=0.1, sign=-1)
-    points = rectangular_generator(scale=(diameter, diameter, diameter), step=0.1)
+    points = rectangle_point_generator(scale=(diameter, diameter, diameter), step=0.1)
     inside_points = mask_sphere(points)
     return inside points
 
 Donute_generator(inner_diameter=(0.1), out_diamtere=(1), step=0.1)
-    points = rectangular_generator(scale=(out_diamtere, out_diamtere, out_diamtere), step=step)
+    points = rectangle_point_generator(scale=(out_diamtere, out_diamtere, out_diamtere), step=step)
 
     inside_points = mask_sphere(points)
     inside_outside_points = mask_sphere(inside_points, sign=-1)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import rclpy
+from bam_descriptions import get_robot_params
 from bam_reachability.kin_wrapper import MoveItKinWrapper, OffsetWristKinWrapper  # Fill in with your actual functions
 from bam_reachability.analysis.run_reachability_test import run_reachability_test
 
@@ -8,8 +9,8 @@ from bam_reachability.analysis.run_reachability_test import run_reachability_tes
 def test_moveit_kin():
     map_path = "/home/bam/bam_ws/src/bam_plugins/bam_reachability/bam_reachability/analysis/ur_moveit_map_13_jun_2025.pkl"
     K_moveit = MoveItKinWrapper(arm="ur", ns="")
-    K_offset_wrist = OffsetWristKinWrapper(arm="ur")
-
+    rp = get_robot_params("ur")
+    K_offset_wrist = OffsetWristKinWrapper(rp, use_tool0=True)
     run_reachability_test(
         name="Moveit Kinematics",
         IK=K_moveit.IK,
