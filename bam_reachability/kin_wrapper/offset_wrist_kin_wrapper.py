@@ -21,7 +21,7 @@ from bam_ros_utils.geometry import move_relative
 
 # to avoid any naming issues naming these files as kin
 #from bam_kinematics_dynamics.six_dof.offset_wrist_kinematics import OffsetWristKinematics as Kinematics
-from bam_kinematics_dynamics import OffsetWristKinematics
+from bam_kinematics_dynamics import OffsetWristKinematics, PinCollision
 
 # PYTHON
 from typing import Tuple
@@ -31,10 +31,14 @@ import numpy as np
 
 class OffsetWristKinWrapper():
     
-    def __init__(self, rp: RobotParam, use_tool0=True):
+    def __init__(self, rp: RobotParam, use_tool0=True, check_collision=False, verbose=False):
 
         # Limits can also be read from URDF, but this is nice because no other dependecies...
-        self.K = OffsetWristKinematics(rp.dh_list, rp.base_link, rp.lower_limits, rp.upper_limits, use_tool0=use_tool0, verbose=False)
+        self.K = OffsetWristKinematics(rp.dh_list, rp.base_link, rp.lower_limits, rp.upper_limits, use_tool0=use_tool0, verbose=verbose)
+
+        self.check_collision = check_collision
+        if check_collision:
+            self.C = PinCollision.from_robot_param(rp, verbose=verbose)
         self.robot_params = rp
         self.name = rp.name + "_offset"
     
@@ -46,9 +50,18 @@ class OffsetWristKinWrapper():
 
         success, ik_sol = self.K.select_sol_by_id(success_list, ik_sol_list, 2)
 
-        return success, np.array(ik_sol)
+        ik_sol = np.array(ik_sol)
+        if success and self.check_collision:
+            if self.C.is_collision(ik_sol):
+                return False, ik_sol
+
+        return success, ik_sol
 
     def FK(self, joint_positions: np.ndarray)-> Tuple[bool, np.ndarray]:
+
+        if self.check_collision:
+            if self.C.is_collision(joint_positions):
+                return False, None
 
         pose_stamped = self.K.fk(joint_positions.tolist())
 

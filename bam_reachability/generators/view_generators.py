@@ -117,7 +117,6 @@ def generate_deviation_vectors(axis=[0,0,1], max_angle_rad=np.deg2rad(180), step
         List of np.ndarray unit vectors.
     """
     axis = normalize(np.array(axis))
-    print("AXIS: ", axis)
     vectors = [axis]
 
     if max_angle_rad == 0:
@@ -171,6 +170,7 @@ def view_generator(inital_view=[0, 0, 1], hemisphere_angle=np.deg2rad(40), view_
         A list of 3×3 rotation matrices. Each matrix has columns [x_axis, y_axis, z_axis],
         forming a valid right-handed frame.
     """
+    print("Inital View: ", inital_view)
     z_vectors = generate_deviation_vectors(inital_view, hemisphere_angle, view_step)
 
     R_list = []
@@ -315,6 +315,13 @@ if __name__ == "__main__":
         axis=(0, 0, -1),  # z-axis (this is what you want to table picking)
         max_angle_rad=np.deg2rad(0),  # 90 degree cone
         step_angle_rad=np.deg2rad(30)
+    )
+    assert len(vectors) == 1 
+
+    vectors = generate_deviation_vectors(
+        axis=(0, 0, -1),  # z-axis (this is what you want to table picking)
+        max_angle_rad=np.deg2rad(0),  # 90 degree cone
+        step_angle_rad=np.deg2rad(0) # 0 deg step...?
     )
     assert len(vectors) == 1 
 

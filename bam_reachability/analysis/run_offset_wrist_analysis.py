@@ -52,26 +52,37 @@ arm_name = "ur"
 
 # 1. Generate Frames
 
-generator = TablePoseGenerator()
-generator = PlacePoseGenerator()
+# 4 DOF, Low point count for fast testing with moveit
+# You don't want to have points over origin or cannot reach them
+generator = TablePoseGenerator(
+    pose = ([0, 0.3, 0.1], [-0.05, 0, 0]),
+    scale = (0.75, 0.4, 0.1),
+    xyz_step = 0.25,
+    hemisphere_angle = np.deg2rad(0),
+    view_step = np.deg2rad(0),
+    rotation_step = np.deg2rad(360),
+    viz = False,
+    )
 
-positions, orientations = generator.generate()
+# generator = PlacePoseGenerator()
+
+positions, orientations = generator.generate(viz=False)
 
 
 print("Positions: ", positions.shape)
 print("Orientations: ", orientations.shape)
-print(positions)
+# print(positions)
 
-# # 2. Create IK/FK functions
-# rp = get_robot_params(arm_name)
-# K = OffsetWristKinWrapper(rp, use_tool0=True)
+# 2. Create IK/FK functions
+rp = get_robot_params(arm_name)
+K = OffsetWristKinWrapper(rp, use_tool0=True, check_collision=True)
 
 
-# # 3. Create Map and save result
-# reachability = ReachabilityMap(positions, orientations, K.IK, K.FK)
+# 3. Create Map and save result
+reachability = ReachabilityMap(positions, orientations, K.IK, K.FK)
 
-# file_path = make_map_path(__file__, arm_name, K.name, generator.name)
+file_path = make_map_path(__file__, arm_name, K.name, generator.name)
 
-# reachability.save(file_path)
+reachability.save(file_path)
 
 

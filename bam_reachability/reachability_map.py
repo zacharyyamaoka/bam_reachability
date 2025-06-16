@@ -14,6 +14,8 @@ Make sure that orientation frames and IK tip are aligned
 - generally IK tip is has +Z pointing out of the final link
 
 #TODO refactor to rename frames -> positions which is more accurate!
+
+#TODO make it so each frame could potetially have a different number of orientations...
 """
 class ReachabilityMap():
 
@@ -240,7 +242,38 @@ class ReachabilityMap():
         self.ik_map = [self.ik_map[i] for i in frame_indices]
         self.fk_map = [self.fk_map[i] for i in frame_indices]
 
+        if self.per_frame_orientations:
+            self.orientations = self.orientations[frame_indices]
+
         self.n_frames = self.frames.shape[0]
+        self.n_orientations = (self.orientations.shape[1] if self.per_frame_orientations else self.orientations.shape[0])
         self.total_count = self.n_frames * self.n_orientations
 
         print(f"[Reduced] Reachability map reduced to {self.n_frames} frames.")
+
+    def get_position(self, frame_index: int) -> np.ndarray:
+        return self.frames[frame_index]
+
+    def get_orientation(self, frame_index: int, orient_index: int) -> np.ndarray:
+        if self.per_frame_orientations:
+            return self.orientations[frame_index, orient_index]
+        else:
+            return self.orientations[orient_index]
+
+    def get_pose(self, frame_index: int, orient_index: int) -> np.ndarray:
+        position = self.get_position(frame_index)
+        orientation = self.get_orientation(frame_index, orient_index)
+        return np.hstack((position, orientation))
+    
+
+    def mask_success_mean(self, threshold: float = 1.0):
+
+        scores = np.array([np.mean(ik_info["success"]) for ik_info in self.ik_map])  # (N,)
+        mask = scores >= threshold
+        frame_indices = np.nonzero(mask)[0]
+
+        if len(frame_indices) == 0:
+            print(f"[Filtered] No frames met the threshold of {threshold}. Skipping as would reduce map to 0")
+            return
+
+        self.reduce(frame_indices)

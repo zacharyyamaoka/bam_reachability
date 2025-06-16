@@ -8,11 +8,14 @@ import os
 
 arm_name = "ur"
 show_histogram = True
-file_path ="/home/bam/bam_ws/src/bam_plugins/bam_reachability/maps/ur/ur_offset_table_1.0x0.5x0.2_0.10_85x42x360_map_15_jun_2025.pkl"
+file_path ="/home/bam/bam_ws/src/bam_plugins/bam_reachability/maps/ur/ur_offset_table_0.8x0.4x0.1_0.25_0x0x360_map_15_jun_2025.pkl"
+file_path ="/home/bam/bam_ws/src/bam_plugins/bam_reachability/maps/ur/ur_offset_place_map_15_jun_2025.pkl"
 
 map = ReachabilityMap.load(file_path)
 print("Frames: ", map.frames.shape)
 print("Map: ", len(map.ik_map))
+
+map.mask_success_mean()
 
 points, colors = colorize_map(map, histogram=show_histogram)
 # points, colors = colorize_inconsistency(map, show_histogram)
@@ -23,7 +26,8 @@ print(points.shape, colors.shape)
 # MESHCAT
 rp = get_robot_params(arm_name) 
 print("Loaded Robot Params for: ", rp.name)
-meshcat_client = MeshcatMapViewer.from_robot_param(map, colors, rp)
+viewer = MeshcatMapViewer.from_robot_param(map, colors, rp)
+viewer.run()
 
 # O3D
 # step = 0.2

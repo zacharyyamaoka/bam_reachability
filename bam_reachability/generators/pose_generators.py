@@ -36,9 +36,9 @@ class PlacePoseGenerator:
 
         positions = np.array([place_1, place_2])
 
-        z_axis = [0.1, 0.1, 1]
+        z_axis = -1 * np.array([0.1, 0.1, 1]) #todo edit this later on to align
         R_list = view_generator(
-            inital_view=-1 * z_axis,
+            inital_view= z_axis,
             hemisphere_angle=self.hemisphere_angle,
             view_step=self.view_step,
             rotation_step=self.rotation_step
@@ -57,7 +57,7 @@ class PlacePoseGenerator:
         xyz_str = f"{self.xyz_step:.2f}"
         scale_str = "x".join([f"{s:.1f}" for s in self.scale])
         angles_str = f"{np.rad2deg(self.hemisphere_angle):.0f}x{np.rad2deg(self.view_step):.0f}x{np.rad2deg(self.rotation_step):.0f}"
-        return f"table_{scale_str}_{xyz_str}_{angles_str}"
+        return f"place"
 
              
 
@@ -78,7 +78,7 @@ class TablePoseGenerator:
         self.rotation_step = rotation_step
         self.viz = viz
 
-    def generate(self) -> Tuple[np.ndarray, np.ndarray]:
+    def generate(self, viz=False) -> Tuple[np.ndarray, np.ndarray]:
         pose_matrix = get_matrix(self.pose)
         positions = table_point_generator(pose_matrix, self.scale, self.xyz_step)
         z_axis = pose_matrix[:3, 2]
