@@ -33,7 +33,7 @@ import numpy as np
 from bam_reachability.reachability_map import ReachabilityMap
 from bam_reachability.visualizer import AlignedSlicer, colorize_map # Optional visualization
 from bam_reachability.analysis.compare_maps import compare_map 
-from typing import Callable
+from typing import Callable, Optional
 
 
 def run_reachability_test(
@@ -43,8 +43,8 @@ def run_reachability_test(
     FK: Callable,
     IK_ALT: Callable,
     FK_ALT: Callable,
-    seed_reset_fn: Callable = None,
-    reduce_count: int = None,
+    seed_reset_fn: Optional[Callable] = None,
+    reduce_count: Optional[int] = None,
     visualize: bool = False,
     visualise_step: float = 0.1,
     expect_fail_consistency=False,
