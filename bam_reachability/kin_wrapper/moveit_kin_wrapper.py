@@ -56,9 +56,9 @@ from tf_transformations import euler_from_quaternion
 # BAM
 from bam_descriptions import get_robot_params
 from bam_moveit_client import MoveItClient
-from bam_ros_utils.msgs.geometry_msgs import get_joint_state, get_pose_stamped
+from bam_ros_utils.msgs.geometry_converter import get_joint_state, get_pose_stamped
 from bam_ros_utils.msgs.np_converter import to_numpy_xyzrpy
-from bam_ros_utils.math.geometry import move_relative
+from bam_ros_utils.math.geometry import apply_offset
 
 # PYTHON
 from typing import Tuple
@@ -87,7 +87,7 @@ class MoveItKinWrapper():
         # Assumes poses are with respect to rp.base_link
         # Transform pose from tool0 (z sticks out of joint 6) to ee_link
         pose_msg = get_pose_stamped(pose[:3], pose[3:], self.robot_params.base_link)
-        pose_msg = move_relative(pose_msg, rpy=[np.pi/2, -np.pi/2, 0], local=True)
+        pose_msg = apply_offset(pose_msg, rpy=[np.pi/2, -np.pi/2, 0], local=True)
 
         if seed == None:
             seed = self.robot_params.ZERO_JOINT_STATE
@@ -105,7 +105,7 @@ class MoveItKinWrapper():
         if not r_fk.success: return False, None
 
         # Transform pose from ee_link to tool0 
-        pose_stamped = move_relative(pose_stamped, rpy=[-np.pi/2, 0, -np.pi/2], local=True)
+        pose_stamped = apply_offset(pose_stamped, rpy=[-np.pi/2, 0, -np.pi/2], local=True)
 
         pose = to_numpy_xyzrpy(pose_stamped)
 

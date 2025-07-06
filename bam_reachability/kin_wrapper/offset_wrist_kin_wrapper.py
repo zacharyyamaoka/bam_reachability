@@ -15,9 +15,9 @@ from tf_transformations import euler_from_quaternion
 # BAM
 from bam_descriptions import get_robot_params, RobotParam
 from bam_moveit_client import MoveItClient
-from bam_ros_utils.msgs.geometry_msgs import get_joint_state, get_pose_stamped
+from bam_ros_utils.msgs.geometry_converter import get_joint_state, get_pose_stamped
 from bam_ros_utils.msgs.np_converter import to_numpy_xyzrpy
-from bam_ros_utils.math.geometry import move_relative
+from bam_ros_utils.math.geometry import apply_offset
 
 # to avoid any naming issues naming these files as kin
 #from bam_kinematics_dynamics.six_dof.offset_wrist_kinematics import OffsetWristKinematics as Kinematics

@@ -58,7 +58,7 @@ def get_matrix(pose) -> np.ndarray:
     else:
         raise ValueError(f"Unsupported pose format or shape: {pose}")
     
-# Helpful utils for working with numpy poses.. for using ROS msgs, see bam_ros_utils.msgs.geometry_msgs and 
+# Helpful utils for working with numpy poses.. for using ROS msgs, see bam_ros_utils.msgs.geometry_converter and 
 def xyzrpy_to_matrix(xyz, rpy):
     mat = np.eye(4)
     mat[:3, :3] = euler2mat(*rpy)  # rotation
