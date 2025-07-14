@@ -126,7 +126,7 @@ class MeshcatClient():
         if colors is None:
             num_points = points.shape[1]
             # Default to semi-transparent green: RGBA = [0, 1, 0, 0.5]
-            rgba = np.array([[0.0], [1.0], [0.0], [0.5]])  # shape (4, 1)
+            rgba = np.array([[0.0], [1.0], [0.0], [1.0]])  # shape (4, 1)
             colors = np.repeat(rgba, num_points, axis=1)
 
         self.viz.viewer[name].set_object(
@@ -183,13 +183,12 @@ def main():
 
     time.sleep(1)
 
-    # traj = create_fake_traj(model)
 
-    # points = 0.5 * np.random.rand(3, 1000) + np.array([[0.2], [0.2], [-0.5]])
-    # meshcat_client.display_pointcloud(points)  # Uses default semi-transparent green
-    # time.sleep(1)
-    # points = 0.5 * np.random.rand(3, 1000) + np.array([[-0.2], [-0.2], [0.5]])
-    # meshcat_client.display_pointcloud(points)  # Uses default semi-transparent green
+    points = 0.5 * np.random.rand(3, 1000) + np.array([[0.2], [0.2], [-0.5]])
+    meshcat_client.display_pointcloud(points)  # Uses default semi-transparent green
+    time.sleep(1)
+    points = 0.5 * np.random.rand(3, 1000) + np.array([[-0.2], [-0.2], [0.5]])
+    meshcat_client.display_pointcloud(points)  # Uses default semi-transparent green
 
 
 if __name__ == '__main__':

@@ -93,7 +93,7 @@ def plot_bins(values: np.ndarray, bin_edges: list[float]):
     plt.tight_layout()
     plt.show()
 
-def colorize_reachability(map: ReachabilityMap, min_threshold=0.2, max_threshold=0.999, n_bins=5, show_histogram=True):
+def colorize_reachability(map: ReachabilityMap, min_threshold=0.2, max_threshold=0.999, n_bins=5, show_histogram=True) -> np.ndarray:
     """
     Return (frames, colors) where colors is (N, 4) RGBA array:
     - Blue = highly reachable

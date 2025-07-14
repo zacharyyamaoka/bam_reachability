@@ -26,7 +26,6 @@ print("URDF:", ur5_urdf_path)
 
 print(PandaLoader.model_path)
 
-robot = example_robot_data.load("panda")
 print(robot.visual_model)
 print(robot.collision_model)
 print(robot.model)

@@ -9,6 +9,8 @@ packages = ["bam_reachability"]
 name = "bam_reachability"
 version = "0.0.1"
 dependencies = [
-  "numpy",
+  "numpy<2.0",
   "open3d",
+  "meshcat",
+  "transforms3d"
 ]

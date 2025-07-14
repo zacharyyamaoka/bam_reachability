@@ -14,14 +14,14 @@ import random
 class MeshcatMapViewer:
 
     @classmethod
-    def from_urdf(cls, map: ReachabilityMap, colors: np.ndarray, urdf_path: str, mesh_package_name: str, size=0.05, meshcat_url=None):
+    def from_urdf(cls, map: ReachabilityMap, colors: np.ndarray, urdf_path: str, mesh_package_name: str, size=0.05, meshcat_url=""):
 
         model, collision_model, visual_model = pin.buildModelsFromUrdf(urdf_path, mesh_package_name)
 
         return cls(map, colors, model, collision_model, visual_model, size, meshcat_url)
 
 
-    def __init__(self, reach_map: ReachabilityMap, colors: np.ndarray, model, collision_model, visual_model, size=0.05, meshcat_url=None):
+    def __init__(self, reach_map: ReachabilityMap, colors: np.ndarray, model, collision_model, visual_model, size=0.05, meshcat_url=""):
         """
         Args:
             reach_map: ReachabilityMap object
@@ -34,7 +34,7 @@ class MeshcatMapViewer:
         self.collision_model = collision_model
         self.visual_model = visual_model
 
-        self.meshcat_client = MeshcatClient(model, collision_model, visual_model, True)
+        self.meshcat_client = MeshcatClient(model, collision_model, visual_model, meshcat_url)
         self.size = size
     
         self.pos_index = 0
@@ -209,27 +209,27 @@ class MeshcatMapViewer:
             listener.join()
 
 if __name__ == "__main__":
-    from bam_kinematics_dynamics import urdf_to_models
+
+    import example_robot_data
+
+    robot = example_robot_data.load("panda")
+    model = robot.model
+    collision_model = robot.collision_model
+    visual_model = robot.visual_model
 
     from bam_reachability.reachability_map import ReachabilityMap
     from bam_reachability.visualization.colorize_map import colorize_reachability, colorize_inconsistency
-    from bam_descriptions import get_robot_params
-    import pinocchio as pin
 
-    file_path ="/home/bam/bam_ws/src/bam_plugins/bam_reachability/maps/ur/ur_offset_table_1.0x0.5x0.2_0.10_85x42x360_map_15_jun_2025.pkl"
+    file_path ="/home/bam/python_ws/bam_reachability/maps/ur/ur_offset_table_1.0x0.5x0.2_0.10_85x42x360_map_15_jun_2025.pkl"
 
 
     # Load reachability map
-    rmap = ReachabilityMap.load(file_path)
+    map = ReachabilityMap.load(file_path)
 
     # Get colorized point cloud
-    frames, colors = colorize_reachability(rmap, show_histogram=True)
-    # points, colors = colorize_inconsistency(rmap)
+    colors = colorize_reachability(map, show_histogram=True)
+    # points, colors = colorize_inconsistency(map)
 
 
-    rp = get_robot_params('ur')
- 
-    model, collision_model, visual_model = pin.buildModelsFromUrdf(rp.urdf_path, rp.mesh_package_name)
-
-    viewer = MeshcatMapViewer(rmap, colors, model, collision_model, visual_model)
+    viewer = MeshcatMapViewer(map, colors, model, collision_model, visual_model)
     viewer.run()
