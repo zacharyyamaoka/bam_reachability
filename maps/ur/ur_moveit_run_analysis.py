@@ -49,7 +49,7 @@ import rclpy
 
 # BAM
 from bam_reachability.generators import rectangle_point_generator, generate_deviation_vectors, visualize_vectors
-from bam_reachability.visualizer import AlignedSlicer
+from bam_reachability.visualizer import O3DMapViewer
 from bam_reachability.kin_wrapper import MoveItKin
 
 from bam_reachability.reachability_map import ReachabilityMap
@@ -80,7 +80,7 @@ rclpy.init(args=None)
 K = MoveItKin(arm="ur", ns="")
 time.sleep(1)
 
-# slicer = AlignedSlicer(frames, step=0.05)
+# slicer = O3DMapViewer(frames, step=0.05)
 # slicer.run()
 
 reachability = ReachabilityMap(frames, orientations, K.IK, K.FK)

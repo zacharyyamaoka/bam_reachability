@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from bam_reachability.generators import rectangle_point_generator, view_generator, visualize_frames, matrix_to_rpy
-from bam_reachability.visualizer import AlignedSlicer
+from bam_reachability.visualizer import O3DMapViewer
 from bam_reachability.kin_wrapper import MockKin
 
 from bam_reachability.reachability_map import ReachabilityMap

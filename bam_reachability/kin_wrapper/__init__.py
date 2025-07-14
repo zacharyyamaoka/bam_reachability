@@ -1,4 +1,4 @@
 from bam_reachability.kin_wrapper.mock_kin_wrapper import MockKinWrapper
-from bam_reachability.kin_wrapper.moveit_kin_wrapper import MoveItKinWrapper
-from bam_reachability.kin_wrapper.offset_wrist_kin_wrapper import OffsetWristKinWrapper
-from bam_reachability.kin_wrapper.pin_kin_wrapper import PinKinWrapper
+from bam_reachability.kin_wrapper.kin_wrapper import KinWrapper
+
+

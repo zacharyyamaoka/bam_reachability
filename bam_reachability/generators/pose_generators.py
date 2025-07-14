@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 
 # BAM
-from bam_reachability.utils import get_matrix, matrix_to_rpy
+from bam_reachability.utils.math_utils import get_matrix, matrix_to_rpy
 from bam_reachability.generators import table_point_generator, view_generator, visualize_points, visualize_frames
 
 # PYTHON
 import numpy as np
 from typing import Tuple
 
+"""
+    Poses are made by combining a set of points and views
+
+    While these could be functions, its helpful to make a class, to generate a unique name for the pose, etc.
+"""
 
 class PlacePoseGenerator:
     def __init__(self,
@@ -63,14 +68,14 @@ class PlacePoseGenerator:
 
 class TablePoseGenerator:
     def __init__(self,
-                 pose=([0, 0.5, 0], [-0.3, 0, 0]),
+                 pose_matrix: np.ndarray,
                  scale=(1.0, 0.5, 0.2),
                  xyz_step=0.1,
                  hemisphere_angle=np.deg2rad(85),
                  view_step=np.deg2rad(85 / 2),
                  rotation_step=np.deg2rad(360),
                  viz=False):
-        self.pose = pose
+        self.pose_matrix = pose_matrix
         self.scale = scale
         self.xyz_step = xyz_step
         self.hemisphere_angle = hemisphere_angle
@@ -79,16 +84,16 @@ class TablePoseGenerator:
         self.viz = viz
 
     def generate(self, viz=False) -> Tuple[np.ndarray, np.ndarray]:
-        pose_matrix = get_matrix(self.pose)
-        positions = table_point_generator(pose_matrix, self.scale, self.xyz_step)
-        z_axis = pose_matrix[:3, 2]
+        positions = table_point_generator(self.pose_matrix, self.scale, self.xyz_step)
+        z_axis = self.pose_matrix[:3, 2]
         R_list = view_generator(
             inital_view=-1 * z_axis,
             hemisphere_angle=self.hemisphere_angle,
             view_step=self.view_step,
             rotation_step=self.rotation_step
         )
-        orientations = np.array([matrix_to_rpy(R) for R in R_list])
+        # orientations = np.array([matrix_to_rpy(R) for R in R_list])
+        orientations = np.array(R_list)
         return positions, orientations
 
     @property
@@ -101,9 +106,10 @@ class TablePoseGenerator:
 
 
 if __name__ == "__main__":
-    generator = TablePoseGenerator()
+    generator = TablePoseGenerator(pose_matrix=get_matrix(([0, 0.5, 0], [0, 0, 0])))
     positions, orientations = generator.generate()
 
     print(positions.shape)
     print(orientations.shape)
+    print(orientations[0].shape)
     print(generator.name)

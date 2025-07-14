@@ -1,42 +1,42 @@
 #!/usr/bin/env python3
 
 """
-Inspired by:
-https://github.com/compas-dev/compas_fab/blob/main/src/compas_fab/robots/reachability_map/vector_generators.py
+    Inspired by:
+    https://github.com/compas-dev/compas_fab/blob/main/src/compas_fab/robots/reachability_map/vector_generators.py
 
-- Right now using transforms3d library, could also mabye us tf_transforms at some point for less low level, this seems to be working though!
+    - Right now using transforms3d library, could also mabye us tf_transforms at some point for less low level, this seems to be working though!
 
-Implemented by Chat GPT
+    Implemented by Chat GPT
 
-One problem is that I need poses for the IK, not direction vectors...
+    One problem is that I need poses for the IK, not direction vectors...
 
-Convert direction vectors into eulers? or...
-
-
-How is it done in grasping?
-
-https://github.com/GouMinghao/rgb_matters/blob/main/rgbd_graspnet/data/utils/gen_label.py
+    Convert direction vectors into eulers? or...
 
 
-They read in the grasps in free 6DOF space and associate it with the closet discrete direction and angle
+    How is it done in grasping?
 
-https://github.com/GouMinghao/rgb_matters/blob/2e176728f6dae5e878447240ce6a2423bf770f36/rgbd_graspnet/data/utils/gen_label.py#L127C1-L130C74
-Rs = grasp.rotation_matrices
-# widths = np.hstack([widths,g_obj['widths']]) # width
-points = grasp.translations
-views_index, angles_index = get_towards_and_angles(Rs, anchor_matrix)
-
-see: get_towards_and_angles
-https://github.com/GouMinghao/rgb_matters/blob/main/rgbd_graspnet/data/utils/view_rotation.py#L12
+    https://github.com/GouMinghao/rgb_matters/blob/main/rgbd_graspnet/data/utils/gen_label.py
 
 
-see: anchor_matrix = generate_matrix()
-https://github.com/GouMinghao/rgb_matters/blob/main/rgbd_graspnet/data/utils/generate_anchor_matrix.py#L119
+    They read in the grasps in free 6DOF space and associate it with the closet discrete direction and angle
+
+    https://github.com/GouMinghao/rgb_matters/blob/2e176728f6dae5e878447240ce6a2423bf770f36/rgbd_graspnet/data/utils/gen_label.py#L127C1-L130C74
+    Rs = grasp.rotation_matrices
+    # widths = np.hstack([widths,g_obj['widths']]) # width
+    points = grasp.translations
+    views_index, angles_index = get_towards_and_angles(Rs, anchor_matrix)
+
+    see: get_towards_and_angles
+    https://github.com/GouMinghao/rgb_matters/blob/main/rgbd_graspnet/data/utils/view_rotation.py#L12
 
 
-Ok what I want to do for the IK testing is a bit different beacuse I don't care as much about the angle vector view, I can always set that to be zero!
+    see: anchor_matrix = generate_matrix()
+    https://github.com/GouMinghao/rgb_matters/blob/main/rgbd_graspnet/data/utils/generate_anchor_matrix.py#L119
 
-See how COMPAS generates frames: https://github.com/compas-dev/compas_fab/blob/005e2680385b80c7f0bd4dfd30d080fd2c135467/tests/robots/test_reachability.py#L42
+
+    Ok what I want to do for the IK testing is a bit different beacuse I don't care as much about the angle vector view, I can always set that to be zero!
+
+    See how COMPAS generates frames: https://github.com/compas-dev/compas_fab/blob/005e2680385b80c7f0bd4dfd30d080fd2c135467/tests/robots/test_reachability.py#L42
 
 """
 
@@ -170,7 +170,7 @@ def view_generator(inital_view=[0, 0, 1], hemisphere_angle=np.deg2rad(40), view_
         A list of 3×3 rotation matrices. Each matrix has columns [x_axis, y_axis, z_axis],
         forming a valid right-handed frame.
     """
-    print("Inital View: ", inital_view)
+    # print("Inital View: ", inital_view)
     z_vectors = generate_deviation_vectors(inital_view, hemisphere_angle, view_step)
 
     R_list = []

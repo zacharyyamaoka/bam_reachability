@@ -4,21 +4,10 @@ import numpy as np
 from transforms3d.euler import euler2quat, euler2mat, mat2euler
 from transforms3d.quaternions import quat2mat
 import os
+from typing import Tuple
 
-def make_map_path(curr__file__, arm_name, kinematic_name, generator_name) -> str:
-    
-    current = os.path.abspath(curr__file__)
-    parent1 = os.path.dirname(current)
-    parent2 = os.path.dirname(parent1)
-    parent3 = os.path.dirname(parent2)
 
-    base_dir = parent3
-    file_path = os.path.join(base_dir, 'maps', arm_name, f'{kinematic_name}_{generator_name}_map')
-    print("Created file path: ", file_path)
-
-    return file_path
-
-def get_matrix(pose) -> np.ndarray:
+def get_matrix(pose: np.ndarray | list | tuple) -> np.ndarray:
     """
     Convert various pose formats to a 4x4 transformation matrix.
 
@@ -65,8 +54,18 @@ def xyzrpy_to_matrix(xyz, rpy):
     mat[:3, 3] = xyz               # translation
     return mat
 
+def xyz_R_to_matrix(xyz, R):
+    mat = np.eye(4)
+    mat[:3, :3] = R 
+    mat[:3, 3] = xyz   
+    return mat
+
 # See similar func in tf_transformation 
 # def euler_from_matrix(matrix, axes='sxyz'):
+def matrix_to_xyzrpy(matrix: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    xyz = matrix[:3, 3]
+    rpy = mat2euler(matrix, axes='sxyz')
+    return xyz, np.array(rpy)
 
 def matrix_to_rpy(matrix, axes='sxyz'):
     return mat2euler(matrix, axes)
@@ -106,34 +105,34 @@ def quats_equal_up_to_sign(rpy1, rpy2, tol=1e-6, verbose=False):
             print(f"  angle difference: {angle_deg:.4f} deg")
         return False
     
-def check_for_none(sol_1, sol_2):
+def check_for_none(sol_1, sol_2) -> tuple[bool, bool]:
     """
     First bool is if you should continue computation, second bool is if they are the same:
     """
     if sol_1 is None and sol_2 is None:
         return True, True  # If both are None → considered equal → return True, True
     elif sol_1 is not None and sol_2 is not None:
-        return False, None # If both are not None → proceed to actual comparison → return False, None
+        return False, True # If both are not None → proceed to actual comparison → return False, None
     else:
         return True, False # If one is None → considered unequal → return True, False
 
-def ik_sol_is_close(sol_1, sol_2, verbose=False):
+def ik_sol_is_close(sol_1, sol_2, verbose=False) -> bool:
 
     found_none, success = check_for_none(sol_1, sol_2)
     if found_none: return success
 
-    success = np.allclose(sol_1, sol_2)
+    success = pose_matrix_is_close(sol_1, sol_2)
     if not success and verbose:
         print(f"[ERROR] IK solutions do not match")
         print(f"ik_sol_1: ", np.round(sol_1,6))
         print(f"ik_sol_2: ", np.round(sol_2,6))
     return success
 
-def fk_sol_is_close(sol_1, sol_2, verbose=False):
+def fk_sol_is_close(sol_1, sol_2, verbose=False) -> bool:
     found_none, success = check_for_none(sol_1, sol_2)
     if found_none: return success
 
-    return pose_is_close(sol_1, sol_2, verbose)
+    return np.allclose(sol_1, sol_2)
 
     # success = np.allclose(sol_1, sol_2)
     # if not success:
@@ -142,7 +141,12 @@ def fk_sol_is_close(sol_1, sol_2, verbose=False):
     #     print(f"fk_sol_2: ", np.round(sol_2,6))
     # return success
 
-def pose_is_close(pose_1, pose_2, verbose=False):
+def pose_matrix_is_close(pose_1, pose_2, verbose=False) -> bool:
+
+    return np.allclose(pose_1, pose_2)
+
+
+def pose_is_close(pose_1, pose_2, verbose=False) -> bool:
     """
     I thought I may need to do quaternion difference, but because it's small angles, you can just compare directly!
 

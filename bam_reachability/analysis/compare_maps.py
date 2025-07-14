@@ -2,120 +2,99 @@
 
 import numpy as np
 from bam_reachability.reachability_map import ReachabilityMap
-from bam_reachability.utils import pose_is_close, ik_sol_is_close, fk_sol_is_close
+from bam_reachability.utils.math_utils import pose_is_close, ik_sol_is_close, fk_sol_is_close, pose_matrix_is_close
 
-def new_diff_info(n_orientations) -> dict:
-    diff_info = {
-        "pose_success":[0] * n_orientations, 
-        "ik_success":[0] * n_orientations, 
-        "ik_sol_success":[0] * n_orientations, 
-        "fk_success":[0] * n_orientations, 
-        "fk_sol_success":[0] * n_orientations, 
-        "fk_consistent":[0] * n_orientations, 
-        }
-    return diff_info
+class DiffInfo:
+    def __init__(self, n_orientations):
+        self.pose_success = [0] * n_orientations
+        self.ik_success = [0] * n_orientations
+        self.ik_sol_success = [0] * n_orientations
+        self.fk_success = [0] * n_orientations
+        self.fk_sol_success = [0] * n_orientations
+        self.fk_consistent = [0] * n_orientations
 
-def compare_map(map_1: ReachabilityMap, map_2: ReachabilityMap, verbose=False):
+    def to_numpy(self):
+        self.pose_success = np.array(self.pose_success)
+        self.ik_success = np.array(self.ik_success)
+        self.ik_sol_success = np.array(self.ik_sol_success)
+        self.fk_success = np.array(self.fk_success)
+        self.fk_sol_success = np.array(self.fk_sol_success)
+        self.fk_consistent = np.array(self.fk_consistent)
+        return self
+
+    def get_keys(self) -> list[str]:
+        return [
+            "pose_success",
+            "ik_success",
+            "ik_sol_success",
+            "fk_success",
+            "fk_sol_success",
+            "fk_consistent",
+        ]
+
+    def to_summary_array(self) -> np.ndarray:
+        arr = np.array([
+            np.mean(self.pose_success),
+            np.mean(self.ik_success),
+            np.mean(self.ik_sol_success),
+            np.mean(self.fk_success),
+            np.mean(self.fk_sol_success),
+            np.mean(self.fk_consistent),
+        ])
+        return arr
+
+def compare_maps(map_1: ReachabilityMap, map_2: ReachabilityMap, verbose=False) -> tuple[bool, dict]:
     """
     Compares two ReachabilityMaps and returns mean values for each consistency metric.
     All returned values should be 1.0 if maps are identical.
     """
-
-    assert map_1.n_frames == map_2.n_frames
+    # If these do not match, then you cannot compare below
+    assert map_1.n_positions == map_2.n_positions
     assert map_1.n_orientations == map_2.n_orientations
-    assert map_1.per_frame_orientations == map_2.per_frame_orientations
+    assert map_1.same_orientations == map_2.same_orientations
 
-    diff_map = []
-
-    frames_1, orientations_1 = map_1.frames, map_1.orientations
-    ik_map_1, fk_map_1 = map_1.ik_map, map_1.fk_map
-
-    frames_2, orientations_2 = map_2.frames, map_2.orientations
-    ik_map_2, fk_map_2 = map_2.ik_map, map_2.fk_map
+    diff_map: list[DiffInfo] = []
 
     # First check that lengths are all equal
     # Not needed actually, as long as its correct doesn't matter if its longer
     count = 0
-    for i in range(map_1.n_frames): 
-        frame_1 = frames_1[i,:] # shape (3,)
-        frame_2 = frames_2[i,:] # shape (3,)
+    for i in range(map_1.n_positions): 
 
-        ik_info_1 = ik_map_1[i]
-        ik_info_2 = ik_map_2[i]
+        ik_info_1 = map_1.ik_map[i]
+        fk_info_1 = map_1.fk_map[i]
 
-        fk_info_1 = fk_map_1[i]
-        fk_info_2 = fk_map_2[i]
+        ik_info_2 = map_2.ik_map[i]
+        fk_info_2 = map_2.fk_map[i]
 
-        diff_info = new_diff_info(map_1.n_orientations)
+        diff_info = DiffInfo(map_1.n_orientations)
 
         for j in range(map_1.n_orientations):
             count += 1
 
-            # Check frame poses are the same. 
-            # Important that inputs are the same, or outputs are not likely to be!
+            pose_1 = map_1.get_pose_matrix(i, j)
+            pose_2 = map_2.get_pose_matrix(i, j)
 
-            if map_1.per_frame_orientations:
-                orientation_1 = orientations_1[i, j]
-                orientation_2 = orientations_2[i, j]
-            else:
-                orientation_1 = orientations_1[j] # shape (3,)
-                orientation_2 = orientations_2[j] # shape (3,)
+            diff_info.pose_success[j] = pose_matrix_is_close(pose_1, pose_2, verbose)
+            diff_info.ik_success[j] = (ik_info_1.success[j] == ik_info_2.success[j])
+            diff_info.ik_sol_success[j] = ik_sol_is_close(ik_info_1.ik_sols[j], ik_info_2.ik_sols[j], verbose)
 
-            pose_1 = np.hstack((frame_1, orientation_1.reshape(-1))) # shape (6,)
-            pose_2 = np.hstack((frame_2, orientation_2.reshape(-1))) # shape (6,)
+            # You may think FK always succesful, but could fail or be different if collision checking has changed 
+            diff_info.fk_success[j] = (fk_info_1.success[j] == fk_info_2.success[j])
+            diff_info.fk_consistent[j] = (fk_info_1.consistent[j] == fk_info_2.consistent[j])
+            diff_info.fk_sol_success[j] = fk_sol_is_close(fk_info_1.fk_sols[j], fk_info_2.fk_sols[j], verbose)
 
-            diff_info["pose_success"][j] = pose_is_close(pose_1, pose_2, verbose)
+    
+        diff_map.append(diff_info.to_numpy())
 
-            # Check IK results are the Same
-            ik_success_1 = ik_info_1["success"][j] 
-            ik_success_2 = ik_info_2["success"][j] 
-            ik_success_same = (ik_success_1 == ik_success_2)
-            if not ik_success_same and verbose:
-                print("[ERROR] IK success not the same")
-                print(f"ik_success_1: {ik_success_1} {ik_info_1["ik_sols"][j]}")
-                print(f"ik_success_1: {ik_success_2} {ik_info_2["ik_sols"][j]}")
+    summary_array = np.zeros((map_1.n_positions, 6))
+    for i in range(map_1.n_positions):
+        summary_array[i] = diff_map[i].to_summary_array()
+    summary_array = np.mean(summary_array, axis=0)
 
-            diff_info["ik_success"][j] = ik_success_same
+    summary_keys = diff_map[0].get_keys()
+    summary_dict = dict(zip(summary_keys, summary_array))
+    if verbose:
+        print(summary_dict)
 
-            ik_sol_1 = ik_info_1["ik_sols"][j] 
-            ik_sol_2 = ik_info_2["ik_sols"][j] 
-            diff_info["ik_sol_success"][j] = ik_sol_is_close(ik_sol_1, ik_sol_2, verbose)
-
-            # Check FK results are the Same
-            # This may fail if they don't have the same collision checking anymore!
-            fk_success_1 = fk_info_1["success"][j] 
-            fk_success_2 = fk_info_2["success"][j] 
-            diff_info["fk_success"][j] = (fk_success_1 == fk_success_2)
-
-            fk_consistent_1 = fk_info_1["consistent"][j] 
-            fk_consistent_2 = fk_info_2["consistent"][j] 
-            diff_info["fk_consistent"][j] = (fk_consistent_1 == fk_consistent_2)
-
-            fk_sol_1 = fk_info_1["fk_sols"][j] 
-            fk_sol_2 = fk_info_2["fk_sols"][j] 
-            diff_info["fk_sol_success"][j] = fk_sol_is_close(fk_sol_1, fk_sol_2, verbose)
-
-        diff_info["ik_success"] = np.array(diff_info["ik_success"])
-        diff_info["ik_sol_success"] = np.array(diff_info["ik_sol_success"])
-        diff_info["fk_success"] = np.array(diff_info["fk_success"])
-        diff_info["fk_consistent"] = np.array(diff_info["fk_consistent"]) # if they have the same consitency and one is 100% consistent then so is the other one
-        diff_info["fk_sol_success"] = np.array(diff_info["fk_sol_success"])
-
-        diff_map.append(diff_info)
-
-    # Initialize empty lists to collect values
-    summary = {}
-    for key in diff_map[0].keys():
-        summary[key] = []
-
-    # Collect values from each frame
-    for i in range(map_1.n_frames): 
-        for key in diff_map[0].keys():
-            summary[key].append(diff_map[i][key])
-
-    # Compute mean across all frames and orientations
-    for key in summary.keys():
-        summary[key] = np.mean(np.array(summary[key]))
-
-    return summary
+    return np.mean(summary_array) == 1.0, summary_dict
 

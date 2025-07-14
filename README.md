@@ -1,3 +1,90 @@
+# bam_reachability
+---
+
+## Reasons for this package
+
+Kinematics is likely the most important package for a robotic start up using kinematics chains (arm, legs, etc.)
+
+Its definetly a basic function, there is not abstractions underneath it. its cold hard math.
+
+This package is meant to help analyze and verify the correctness of kinematics.
+
+---
+
+1. I was getting frusterated when making calls to MoveIt, that planning would fail beacuse the points where outside the workspace. 
+2. During testing, it was not simple to generate random points within the workspace of a robot.
+
+My first solution was to use the Moveit Rviz Marker to manually move the robot to positions and save the location:
+
+```python
+self.HOME_JOINT_STATE = get_joint_state(self.joint_names, [-0.003752, 0.027098, -1.432066, -1.768329, -1.633024, 1.568815])
+self.HOME_POSE = get_pose([0.290701, -0.062931, 0.452099], [1.570788, -0.031643, -0.066011])
+self.HOME_POSE_STAMPED = pose_to_pose_stamped(self.HOME_POSE, self.base_link)
+
+self.READY_JOINT_STATE = get_joint_state(self.joint_names, [0.002404, 1.384432, -1.882157, -2.236169, -1.078447, 1.602683])
+self.READY_POSE = get_pose([0.292174, -0.053916, 0.090194], [1.804073, 0.356935, 0.531201])
+self.READY_POSE_STAMPED = pose_to_pose_stamped(self.READY_POSE, self.base_link)
+```
+
+I have this script: /home/bam/bam_ws/src/bam_misc/bam_calibration/scripts/save_curr_pose.py that auto generates this code,
+and the matching code for the robot.srdf
+
+This is great for being very specific about points, and at somepoint something like this could be used to program drop points for the robot (either virtually or IRL)
+
+The script remains the same which is saving the current pose, all that changes is, do you moveit via moveit? or via gravity compensation back driving (like eva)?
+
+
+Limitaions of this approach though are: 
+
+1. You need to update it if the robot description changes
+2. Not practical for generating a large number of random poses
+3. No notion of dexterous/hemisphere workspace
+
+An interesting opporunity:
+
+- If you are discrtizing the workspace (heatmap), then you can actaully precompute, all the possible paths ahead of time to make sure they are all succesful!
+- This may take a while... so you could start with a lower resolution version
+
+## Pose Representation
+
+Options:
+
+1. xyz rpy (euluer)
+2. xyz xyzw (quaternion)
+3. xyz R
+4. T
+
+
+Simple, Fast, Clear.
+- using Transform and Rotation matrices is very specific and natural way
+- Split position and orietation so that you can mix and match
+- When calculating targets they are often in matrices beacuse you need to find say the position of an object in a camera frame relative to the base frame
+- The IK solutions return matrices that I am converting...
+- The generators return matrices
+- When comparing you cannot do with rpy, beacuse not unique
+
+```
+    def fk(self, q: list) -> PoseStamped:
+
+        # TODO check if q is within joint limits...
+        q_reflect = self.reflect(q) # careful not to override q
+
+        T = forward_kinematics_offset_wrist(q_reflect, self.dh_params)
+
+        pose = matrix_to_pose_stamped(T, self.base_link)
+
+        if self.use_tool0:
+            # Transform pose from ee_link to tool0 
+            pose = apply_offset(pose, rpy=[-np.pi/2, 0, -np.pi/2], local=True)
+
+        return pose
+```
+
+- Matrices don't depend on any message format like PoseStamped, etc..
+
+Ok confirmed! I will represent as (xyz and R)
+
+I do think there is great power in just simple python packages which describe exactly what they are doing... 
 
 # TODO
 
@@ -10,6 +97,23 @@
 - The adventage is that this package is actually quite integral! and its better to use the same languague!
 
 - FML I couldn't do it! As I started convert to ROS, I couldn't bring my self to make this beutiful pure python package be filled with these ROS utils...
+
+Ok I think its very reasonable that the kin_wrapper works with numpy arrays. This makes it indepent from ROS msgs, which is definetly a bonus! 
+As most of my implementations are in ROS. I am ok for simpilicty to have it a ros package for now...
+
+why not make it external though? yes lets do it!
+
+The generator functions are very useful for discretizing action spaces. 
+
+
+your_kinematics -> kin_wrapper -> reachability_map -> analysis/visualization
+
+One down side is that if you want to really understand moveit, you will likely need to more directly call the kinematics, as via ros is way to slow...
+Potetially could be done via c++ to just generate the data? or could use moveit python direct api, lots of options...
+
+What representation to use for orientations and positions, etc?
+
+Euler, Quaternion, Rotation matrix? I think there are trades offs between all of them... I can just continue as I am for now, fairly easy to change in the future if needed...
 
 Todo
 
@@ -68,7 +172,7 @@ Publish dexterous, reach, 4 DOF, Hemisphere workspace mesh markers
 - Save meshes for hemisphere, and 4 Dof workspace (given a z direction, by default is baselink z direction)
 - Save negative pointcloud for poitns that are outside of the meshes
 
-- Create Table generator
+- Create Table generator (this is important for discreizating an action space...)
 - Ability to save TF between baselink and "table_Frame" to human editable YAML
 - Ability to set height, and +x,-x, +y,-y extents (assuming that Z is point upwards)
 - Ability to run a script that will then generate points inside of that grid 
@@ -86,6 +190,9 @@ Publish dexterous, reach, 4 DOF, Hemisphere workspace mesh markers
 
 # Installation
 
+Pinnochio has to be installed seperatetly
+https://github.com/stack-of-tasks/pinocchio?tab=readme-ov-file
+https://stack-of-tasks.github.io/pinocchio/download.html
 
 OLD, now installing as a Ros package
 

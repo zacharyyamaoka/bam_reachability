@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# BAM
+from bam_reachability.kin_wrapper.kin_wrapper import KinWrapper
+from bam_reachability.utils.math_utils import get_matrix, matrix_to_xyzrpy, xyzrpy_to_matrix
 
 # PYTHON
 from typing import Tuple
@@ -7,8 +10,9 @@ import os
 import numpy as np
 
 
+
 """
-Simply class to mock and test the kinematics
+Simple class to mock and test the kinematics
 
 Assume its a 2 DOF robot arm...
 
@@ -17,58 +21,60 @@ I would expect this to look like a cylinder workspace instead of a sphere!
     - With a uniform chance of failure, the histogram should have more points
       towards theouter edges,as there is more area inside the circle there
 
+- you could do a 3 DOF arm, but the kinematics are slightly more complex... can do if needed later
 """
 
-class MockKinWrapper():
+class MockKinWrapper(KinWrapper):
 
     def __init__(self, L1=0.25, L2=0.25, seed=1337, random_ik_fail=True):
         """
         L1: Length of link 1 (m)
         L2: Length of link 2 (m)
         """
+        super().__init__("Mock")
         self.L1 = L1
         self.L2 = L2
         self.seed = seed
         self.rng = np.random.default_rng(seed)  # create a per-instance random generator
         self.random_ik_fail = random_ik_fail
-        self.name = "mock"
 
     def seed_reset(self):
         """Reset the RNG to the original seed."""
         self.rng = np.random.default_rng(self.seed)
 
-    def IK(self, pose: np.ndarray)-> Tuple[bool, np.ndarray]:
-        """
-        pose: [x, y, z, rx, ry, rz]
-        """
+    def IK(self, pose_matrix: np.ndarray)-> Tuple[bool, np.ndarray]:
+        xyz, rpy = matrix_to_xyzrpy(pose_matrix)
 
-        # calculate J1,J2,J3 by assuming a 2 DOF arm
+        # calculate J1,J2 by assuming a 2 DOF arm
+        x = xyz[0]
+        y = xyz[1]
 
-        x = pose[0]
-        y = pose[1]
 
+        pose_radius = np.sqrt(x**2 + y**2)
+        max_reach = self.L1 + self.L2
+
+        if pose_radius >= max_reach:
+            return False, np.zeros(6)
+
+        # to test out different colors, its helpful to give give different poses different reachability scores!
         if self.random_ik_fail:
-            # Random chance of failure
-            target_dist = np.sqrt(x**2 + y**2)
-            reach_limit = self.L1 + self.L2
 
-            if target_dist >= reach_limit:
-                return False, None
-            else:
-                prob = 1.0 - (target_dist / reach_limit)
-                if prob >= 0.8: # add more points with 100% success
-                    prob = 1
-                if not (self.rng.random() < prob): 
-                    return False, None
+            # prob is 0.0 at pose_radius = max_reach, and 1.0 at pose_radius = 0.0
+            prob = 1.0 - (pose_radius / max_reach)
+            if prob <= 0.2: # add area with 100% success    
+                pass
+            
+            elif (self.rng.random() < prob): 
+                return False, np.zeros(6)
 
         q1, q2, success = rr_ik(self.L1, self.L2, x, y)
 
         J1 = q1
         J2 = q2
-        J3 = pose[2] # Pass through value as well! just like wrist
-        J4 = pose[3]
-        J5 = pose[4]
-        J6 = pose[5]
+        J3 = xyz[2] #Although it's strange to assign z to J3, it works just like the wrist pass through values below
+        J4 = rpy[0]
+        J5 = rpy[1]
+        J6 = rpy[2]
 
         return success, np.array([J1, J2, J3, J4, J5, J6])
 
@@ -85,7 +91,9 @@ class MockKinWrapper():
         ry = joint_positions[4]
         rz = joint_positions[5]
 
-        return True, np.array([x, y, z, rx, ry, rz])
+        pose_matrix = xyzrpy_to_matrix([x, y, z], [rx, ry, rz])
+
+        return True, pose_matrix
 
 
 # from bam_kinematics_dynamics/rr_kinematics.py
@@ -141,25 +149,25 @@ if __name__ == '__main__':
     from bam_reachability.generators import rectangle_point_generator, generate_deviation_vectors
 
 
-    frames = rectangle_point_generator(scale=(1, 1, 1), step=0.05)
-    orientations = generate_deviation_vectors([0,0,1], np.deg2rad(180), np.deg2rad(30))
-    print("Frame: ", frames.shape)
-    print("Orientation: ", orientations.shape)
-    print("")
+    # frames = rectangle_point_generator(scale=(1, 1, 1), step=0.05)
+    # orientations = generate_deviation_vectors([0,0,1], np.deg2rad(180), np.deg2rad(30))
+    # print("Frame: ", frames.shape)
+    # print("Orientation: ", orientations.shape)
+    # print("")
 
-    frame = frames[0, :]
-    orientation = orientations[0, :]
-    pose = np.hstack((frame, orientation))  # shape (N, 6)
+    # frame = frames[0, :]
+    # orientation = orientations[0, :]
+    # pose = np.hstack((frame, orientation))  # shape (N, 6)
 
-    print("Frame: ", frame.shape)
-    print("Orientation: ", orientation.shape)
-    print("Pose: ", pose.shape)
+    # print("Frame: ", frame.shape)
+    # print("Orientation: ", orientation.shape)
+    # print("Pose: ", pose.shape)
 
     kinematics = MockKinWrapper(L1=0.5, L2=0.5, random_ik_fail=False)
 
-    ik_success, ik_sol = kinematics.IK(pose)
-    fk_success, fk_sol = kinematics.FK(ik_sol)
+    # ik_success, ik_sol = kinematics.IK(pose)
+    # fk_success, fk_sol = kinematics.FK(ik_sol)
 
-    print(pose)
-    print(np.round(ik_sol,3))
-    print(np.round(fk_sol,3))
+    # print(pose)
+    # print(np.round(ik_sol,3))
+    # print(np.round(fk_sol,3))

@@ -31,8 +31,8 @@ Careful!!!!! This will fail with the mock unless you seed it properly!!
 
 import numpy as np
 from bam_reachability.reachability_map import ReachabilityMap
-from bam_reachability.visualizer import AlignedSlicer, colorize_map # Optional visualization
-from bam_reachability.analysis.compare_maps import compare_map 
+from bam_reachability.visualizer import O3DMapViewer, colorize_map # Optional visualization
+from bam_reachability.analysis.compare_maps import compare_maps 
 from typing import Callable, Optional
 
 
@@ -61,7 +61,7 @@ def run_reachability_test(
     if visualize:
         print("[Step] Visualizing old map...")
         points, colors = colorize_map(map_old, histogram=True)
-        AlignedSlicer(points, step=visualise_step, colors=colors).run()
+        O3DMapViewer(points, step=visualise_step, colors=colors).run()
 
     if reduce_count is not None:
         print(f"[Step] Reducing map to {reduce_count} test frames...")
@@ -70,7 +70,7 @@ def run_reachability_test(
     if visualize and reduce_count is not None:
         print("[Step] Visualizing reduced map...")
         points, colors = colorize_map(map_old, histogram=True)
-        AlignedSlicer(points, step=visualise_step, colors=colors).run()
+        O3DMapViewer(points, step=visualise_step, colors=colors).run()
 
     print("[Step] Recomputing reachability map 1...")
     if seed_reset_fn: seed_reset_fn()
@@ -107,19 +107,19 @@ def run_reachability_test(
     check("Consistency", fk_consistent, expected=1.0, allow_fail=expect_fail_consistency)
 
     print("\n[TEST 2] Deterministic (repeatable result):")
-    det = compare_map(map_1, map_2)
+    det = compare_maps(map_1, map_2)
     print(det)
     for key, value in det.items():
         check(f"Deterministic[{key}]", value, expected=1.0, allow_fail=expect_fail_deterministic)
 
     print("\n[TEST 3] Stable (matches saved map):")
-    stable = compare_map(map_1, map_old)
+    stable = compare_maps(map_1, map_old)
     print(stable)
     for key, value in stable.items():
         check(f"Stable[{key}]", value, expected=1.0, allow_fail=expect_fail_stability)
 
     print("\n[TEST 4] Compatible (alternate kinematics produce same result):")
-    compat = compare_map(map_1, map_alt)
+    compat = compare_maps(map_1, map_alt)
     print(compat)
     for key, value in compat.items():
         check(f"Compatible[{key}]", value, expected=1.0, allow_fail=expect_fail_compatibility)
