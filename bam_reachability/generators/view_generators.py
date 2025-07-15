@@ -292,14 +292,32 @@ def get_rotation_matrix_from_z(direction):
     return R
 
 
+def mask_R_list_by_angle(R_list, target_vector, max_angle_rad):
+
+    if isinstance(R_list, list):
+        R_list = np.array(R_list)
+
+    assert R_list.shape[1] == 3, "Orientations must be a 3x3 matrix"
+    assert R_list.shape[2] == 3, "Orientations must be a 3x3 matrix"
+
+    # get the z axis of each orientation
+    z_axes = R_list[:, :, 2]
+
+    mask = mask_vectors_by_angle(z_axes, target_vector, max_angle_rad)
+    return mask
+
+
+
 def mask_vectors_by_angle(vectors, target_vector, max_angle_rad):
     """Returns mask (1/0) indicating whether each vector lies within max_angle of the target."""
-    
+    assert max_angle_rad <= np.pi, "Cannot deviate more than 180 degrees"
+
     target = normalize(np.array(target_vector))
     vectors = np.array(vectors)
     dots = np.dot(vectors, target)
     dots = np.clip(dots, -1.0, 1.0)  # Numerical safety
     angles = np.arccos(dots)
+    # print(angles)
     mask = angles <= max_angle_rad + 0.1 #add a bit of tolerance, because at 90 for example, it can be cut off
     return mask
 

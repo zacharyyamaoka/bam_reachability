@@ -14,7 +14,7 @@ import numpy as np
 
 K = UR5eOffsetWristKinWrapper()
 
-map = ReachabilityMap.load("/home/bam/python_ws/bam_reachability/maps/ur/ur5e/ur5e_table_1.2x1.2x1.0_0.10_90x45x360_15_jul_2025.pkl")
+map = ReachabilityMap.load("/home/bam/python_ws/bam_reachability/maps/ur/ur5e/ur5e_table_1.2x1.2x1.0_0.10_180x45x360_15_jul_2025.pkl")
 
 colors = colorize_reachability(map, show_histogram=False)
 

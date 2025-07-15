@@ -17,7 +17,7 @@ generator = TablePoseGenerator(
     pose_matrix = get_matrix(([0, 0, 0], [0, 0, 0])),
     scale = (1.25, 1.25, 1),
     xyz_step = 0.1,
-    hemisphere_angle = np.deg2rad(90),
+    hemisphere_angle = np.deg2rad(180),
     view_step = np.deg2rad(45),
     rotation_step = np.deg2rad(360),
     )

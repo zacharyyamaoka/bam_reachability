@@ -1,9 +1,11 @@
 
 #!/usr/bin/env python3
 
-from bam_reachability.generators import generate_orthonormal_vectors, generate_deviation_vectors, visualize_vectors
+from bam_reachability.generators import generate_orthonormal_vectors, generate_deviation_vectors, visualize_vectors, mask_R_list_by_angle
 import numpy as np
-from transforms3d.euler import mat2euler
+from transforms3d.euler import mat2euler, euler2mat
+import pytest
+from bam_reachability.reachability_map import ReachabilityMap
 
 def test_transforms():
     R = np.eye(3)
@@ -74,9 +76,49 @@ def test_generate_orthonormal_vectors():
     assert vectors.shape[0] == 1
 
 
+def test_mask_R_list_by_angle():
+    orientations = np.array([euler2mat(0, 0, 0), euler2mat(0, 0, np.pi), euler2mat(0, np.pi/2, 0), euler2mat(0, -np.pi/2, 0), euler2mat(np.pi/2, 0, 0), euler2mat(-np.pi/2, 0, 0)])
+
+    mask = mask_R_list_by_angle(orientations, [0, 0, 1], np.deg2rad(90))
+    assert np.all(mask == [1, 1, 1, 1, 1, 1])
+
+    mask = mask_R_list_by_angle(orientations, [0, 0, 1], np.deg2rad(80))
+    assert np.all(mask == [1, 1, 0, 0, 0, 0])
+
+    orientations = np.array([euler2mat(0, 0, 0), euler2mat(0, 0, np.pi), euler2mat(0, np.pi, 0), euler2mat(0, -np.pi, 0), euler2mat(np.pi, 0, 0), euler2mat(-np.pi, 0, 0)])
+    mask = mask_R_list_by_angle(orientations, [0, 0, 1], np.deg2rad(180))
+    assert np.all(mask == [1, 1, 1, 1, 1, 1])
+
+    with pytest.raises(AssertionError):
+        mask = mask_R_list_by_angle(orientations, [0, 0, 1], np.deg2rad(360))
+
+def test_mask_R_list_by_angle_diff_vector():
+    orientations = np.array([euler2mat(0, 0, 0), euler2mat(0, 0, np.pi), euler2mat(0, np.pi/2, 0), euler2mat(0, -np.pi/2, 0), euler2mat(np.pi/2, 0, 0), euler2mat(-np.pi/2, 0, 0)])
+
+    # any rotation around x or y shouldn't change the distance which is 90!
+    mask = mask_R_list_by_angle(orientations, [1, 0, 0], np.deg2rad(90))
+    # I orginally though it would be [1, 1, 0, 0, 1, 1]
+    # but actually rotating around the y axis moves z directly towards the target vector or in the opposite direction!
+    # so its [1, 1, 1, 0, 1, 1]
+    # [1.57079633 1.57079633 0.         3.14159265 1.57079633 1.57079633]
+    assert np.all(mask == [1, 1, 1, 0, 1, 1])
+
+    mask = mask_R_list_by_angle(orientations, [1, 0, 0], np.deg2rad(80))
+    assert np.all(mask == [0, 0, 1, 0, 0, 0])
+
+def test_mask_R_map():
+    map = ReachabilityMap.load("/home/bam/python_ws/bam_reachability/maps/ur/ur5e/ur5e_table_1.2x1.2x1.0_0.10_90x45x360_15_jul_2025.pkl")
+
+    hemisphere_mask = mask_R_list_by_angle(map.orientations, [0, 0, -1], np.deg2rad(90))
+    four_dof_mask = mask_R_list_by_angle(map.orientations, [0, 0, -1], np.deg2rad(5))
+    assert np.sum(hemisphere_mask) == len(hemisphere_mask)
+    assert np.sum(four_dof_mask) == 1
 
 if __name__ == "__main__":
-    test_generate_orthonormal_vectors()
-    test_view_generators()
-    test_transforms()
+    # test_generate_orthonormal_vectors()
+    # test_view_generators()
+    # test_transforms()
+    test_mask_R_list_by_angle()
+    test_mask_R_list_by_angle_diff_vector()
+    test_mask_R_map()
     print("All tests passed")

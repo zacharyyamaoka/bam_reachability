@@ -253,7 +253,30 @@ class ReachabilityMap():
         else:
             return self.orientations[orient_index]
 
-    
+    def get_sol_or_none(self, sol_list) -> np.ndarray | None:
+        for sol in sol_list:
+            if sol is not None:
+                return sol
+        return None
+
+    def sample_valid_fk_sol(self) -> np.ndarray:
+        while True:
+            frame_index = np.random.randint(0, self.n_positions)
+            fk_info = self.fk_map[frame_index]
+            for orient_index, fk_sol in enumerate(fk_info.fk_sols):
+                if fk_sol is not None:
+                    return fk_sol
+            # If no valid fk_sol found, try another random frame_index
+
+    def sample_valid_ik_sol(self) -> np.ndarray:
+        while True:
+            frame_index = np.random.randint(0, self.n_positions)
+            ik_info = self.ik_map[frame_index]
+            for orient_index, ik_sol in enumerate(ik_info.ik_sols):
+                if ik_sol is not None:
+                    return ik_sol
+            # If no valid fk_sol found, try another random frame_index
+
     def mask_success_mean(self, threshold: float = 1.0):
 
         scores = np.array([np.mean(ik_info["success"]) for ik_info in self.ik_map])  # (N,)
