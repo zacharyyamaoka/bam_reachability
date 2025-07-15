@@ -1,40 +1,48 @@
 #!/usr/bin/env python3
 
 # BAM
-from bam_reachability.visualization.meshcat_client import MeshcatClient
+from pin_utils import MeshcatClient
 from bam_reachability.reachability_map import ReachabilityMap
-from bam_descriptions import RobotParam
 
 # PYTHON
 import numpy as np
 import pinocchio as pin
 import time
 import random
+from xacrodoc import XacroDoc
 
-class MeshcatMapViewer:
+class MeshcatMapViewer(MeshcatClient):
 
     @classmethod
-    def from_urdf(cls, map: ReachabilityMap, colors: np.ndarray, urdf_path: str, mesh_package_name: str, size=0.05, meshcat_url=""):
+    def from_xacro(cls, map: ReachabilityMap, colors: np.ndarray, xacro_path: str, mesh_directory: str, size=0.05, zmq_url="", color=None):
 
-        model, collision_model, visual_model = pin.buildModelsFromUrdf(urdf_path, mesh_package_name)
+        doc = XacroDoc.from_file(xacro_path)
+        with doc.temp_urdf_file_path() as urdf_path:
+            model, collision_model, visual_model = pin.buildModelsFromUrdf(urdf_path, mesh_directory)
 
-        return cls(map, colors, model, collision_model, visual_model, size, meshcat_url)
+        return cls(map, colors, model, collision_model, visual_model, size, zmq_url)
+
+    @classmethod
+    def from_urdf(cls, map: ReachabilityMap, colors: np.ndarray, urdf_path: str, mesh_directory: str, size=0.05, zmq_url="", color=None):
+        model, collision_model, visual_model = pin.buildModelsFromUrdf(urdf_path, mesh_directory)
+        return cls(map, colors, model, collision_model, visual_model, size, zmq_url)
 
 
-    def __init__(self, reach_map: ReachabilityMap, colors: np.ndarray, model, collision_model, visual_model, size=0.05, meshcat_url=""):
+    def __init__(self, reach_map: ReachabilityMap, colors: np.ndarray, model, collision_model, visual_model, size=0.05, zmq_url=""):
         """
         Args:
             reach_map: ReachabilityMap object
             colors: (N, 3) or (N, 4) numpy array for coloring each frame point
             model, collision_model, visual_model: Pinocchio robot models
         """
+        super().__init__(model, collision_model, visual_model, zmq_url=zmq_url)
+
         self.reach_map = reach_map
         self.colors = colors
         self.model = model
         self.collision_model = collision_model
         self.visual_model = visual_model
 
-        self.meshcat_client = MeshcatClient(model, collision_model, visual_model, meshcat_url)
         self.size = size
     
         self.pos_index = 0
@@ -54,7 +62,7 @@ class MeshcatMapViewer:
         else:
             color = self.colors.T
 
-        self.meshcat_client.display_pointcloud(points, color, size=self.size)
+        super().display_pointcloud(points, color, size=self.size)
 
         # fk_info = {
         #     "fk_sols":[None] * self.n_orientations,
@@ -68,7 +76,7 @@ class MeshcatMapViewer:
             
         if ik_info.success[self.orient_index]:
             q = ik_info.ik_sols[self.orient_index]
-            self.meshcat_client.display(q)
+            super().display(q)
             print(f"[✓] Displaying frame {self.pos_index}, orientation {self.orient_index}")
             found = True
         else:
@@ -79,26 +87,26 @@ class MeshcatMapViewer:
             #     if ik_info.success[next_idx]:
             #         self.orient_index = next_idx
             #         q = ik_info["ik_sols"][self.orient_index]
-            #         self.meshcat_client.display(q)
+            #         super().display(q)
             #         print(f"[✓] Found fallback orientation {self.orient_index} for frame {self.pos_index}")
             #         found = True
             #         break
 
             if not found:
-                self.meshcat_client.display(np.array([0,0,0,0,0,0]))
+                super().display(np.array([0,0,0,0,0,0]))
                 print(f"[✗] No valid IK solutions for frame {self.pos_index}")
 
 
         target_pose_matrix = self.reach_map.get_pose_matrix(self.pos_index, self.orient_index)
-        self.meshcat_client.display_pose_matrix(target_pose_matrix, name="target_pose")
+        super().display_pose_matrix(target_pose_matrix, name="target_pose")
 
         if found:
             if fk_info.success[self.orient_index]:
                 fk_pose = fk_info.fk_sols[self.orient_index]  # shape (6,) = [xyz rpy]
-                self.meshcat_client.display_pose_matrix(fk_pose, name="fk_pose") # type: ignore
+                super().display_pose_matrix(fk_pose, name="fk_pose") # type: ignore
         else:
             print(f"[✗] No valid FK solutions for frame {self.pos_index}")
-            self.meshcat_client.clear_pose_matrix(name="fk_pose")
+            super().clear_pose_matrix(name="fk_pose")
 
         # do this after you have found the orient index
         def mark_index(lst):
