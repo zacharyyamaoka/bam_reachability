@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from bam_reachability.visualizer import O3DMapViewer, colorize_map, colorize_inconsistency, MeshcatMapViewer
+from bam_reachability.visualizer import Open3DMapViewer, colorize_map, colorize_inconsistency, MeshcatMapViewer
 from bam_reachability.reachability_map import ReachabilityMap
 from bam_descriptions import get_robot_params
 
@@ -31,5 +31,5 @@ viewer.run()
 
 # O3D
 # step = 0.2
-# slicer = O3DMapViewer(points, step, colors, hide_alpha=False)
+# slicer = Open3DMapViewer(points, step, colors, hide_alpha=False)
 # slicer.run()

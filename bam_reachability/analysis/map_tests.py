@@ -31,14 +31,14 @@ Careful!!!!! This will fail with the mock unless you seed it properly!!
 
 import numpy as np
 from bam_reachability.reachability_map import ReachabilityMap
-from bam_reachability.visualizer import O3DMapViewer, colorize_map # Optional visualization
+from bam_reachability.visualizer import Open3DMapViewer, colorize_map # Optional visualization
 from bam_reachability.analysis.compare_maps import compare_maps 
 from typing import Callable, Optional
 from bam_reachability.kin_wrapper import KinWrapper
 
 def visualize_map(map: ReachabilityMap, visualise_step: float = 0.1):
     points, colors = colorize_map(map, histogram=True)
-    O3DMapViewer(points, step=visualise_step, colors=colors).run()
+    Open3DMapViewer(points, step=visualise_step, colors=colors).run()
         
 def check_stable(map_old: ReachabilityMap, K: KinWrapper) -> tuple[bool, dict]:
     """ New map should be the same as the old map """

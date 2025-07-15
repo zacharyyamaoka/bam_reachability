@@ -5,7 +5,7 @@ from bam_reachability.kin_wrapper.kin_wrapper import KinWrapper
 from bam_reachability.utils.math_utils import get_matrix, matrix_to_xyzrpy, xyzrpy_to_matrix
 
 # PYTHON
-from typing import Tuple
+from typing import Tuple, Optional
 import os
 import numpy as np
 
@@ -42,7 +42,7 @@ class MockKinWrapper(KinWrapper):
         """Reset the RNG to the original seed."""
         self.rng = np.random.default_rng(self.seed)
 
-    def IK(self, pose_matrix: np.ndarray)-> Tuple[bool, np.ndarray]:
+    def IK(self, pose_matrix: np.ndarray, q_seed: Optional[np.ndarray] = None)-> Tuple[bool, np.ndarray]:
         xyz, rpy = matrix_to_xyzrpy(pose_matrix)
 
         # calculate J1,J2 by assuming a 2 DOF arm

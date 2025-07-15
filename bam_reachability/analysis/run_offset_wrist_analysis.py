@@ -36,7 +36,7 @@ import rclpy
 # BAM
 from bam_descriptions import get_robot_params
 from bam_reachability.generators import TablePoseGenerator, PlacePoseGenerator
-from bam_reachability.visualizer import O3DMapViewer
+from bam_reachability.visualizer import Open3DMapViewer
 from bam_reachability.kin_wrapper import OffsetWristKinWrapper
 from bam_reachability.utils import xyzrpy_to_matrix, make_map_path
 

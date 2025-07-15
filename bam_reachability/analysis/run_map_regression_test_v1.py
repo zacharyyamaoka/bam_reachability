@@ -31,7 +31,7 @@ Careful!!!!! This will fail with the mock unless you seed it properly!!
 
 import numpy as np
 from bam_reachability.reachability_map import ReachabilityMap
-from bam_reachability.visualizer import O3DMapViewer, colorize_map # Optional visualization
+from bam_reachability.visualizer import Open3DMapViewer, colorize_map # Optional visualization
 from bam_reachability.analysis.compare_maps import compare_maps 
 from typing import Callable, Optional
 
@@ -61,7 +61,7 @@ def run_reachability_test(
     if visualize:
         print("[Step] Visualizing old map...")
         points, colors = colorize_map(map_old, histogram=True)
-        O3DMapViewer(points, step=visualise_step, colors=colors).run()
+        Open3DMapViewer(points, step=visualise_step, colors=colors).run()
 
     if reduce_count is not None:
         print(f"[Step] Reducing map to {reduce_count} test frames...")
@@ -70,7 +70,7 @@ def run_reachability_test(
     if visualize and reduce_count is not None:
         print("[Step] Visualizing reduced map...")
         points, colors = colorize_map(map_old, histogram=True)
-        O3DMapViewer(points, step=visualise_step, colors=colors).run()
+        Open3DMapViewer(points, step=visualise_step, colors=colors).run()
 
     print("[Step] Recomputing reachability map 1...")
     if seed_reset_fn: seed_reset_fn()

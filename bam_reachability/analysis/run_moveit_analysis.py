@@ -49,7 +49,7 @@ import rclpy
 
 # BAM
 from bam_reachability.generators import rectangle_point_generator, generate_deviation_vectors, visualize_vectors
-from bam_reachability.visualizer import O3DMapViewer
+from bam_reachability.visualizer import Open3DMapViewer
 from bam_reachability.kin_wrapper import MoveItKinWrapper
 
 from bam_reachability.reachability_map import ReachabilityMap
@@ -72,7 +72,7 @@ orientations = np.random.uniform(low=-3.14, high=3.14, size=(positions.shape[0],
 # orientations = generate_deviation_vectors([0,0,1], np.deg2rad(180), np.deg2rad(60))
 print("positions: ", positions.shape)
 print("Orientations: ", orientations.shape)
-# slicer = O3DMapViewer(positions, step=0.05)
+# slicer = Open3DMapViewer(positions, step=0.05)
 # slicer.run()
 
 # 2. Create IK/FK functions

@@ -225,6 +225,8 @@ This is great at some point, but I am looking for something simpler for now!
 https://github.com/compas-dev/compas_fab/blob/main/src/compas_fab/robots/reachability_map/reachability_map.py
 
 
+[Pinnochio Workspace Example](https://github.com/stack-of-tasks/pinocchio/blob/devel/examples/reachable-workspace-with-collisions.py)
+
 - It is faster to just compute it for all the orientations once, relative to the robot base_frame and then keep thoose points
 
 

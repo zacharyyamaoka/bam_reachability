@@ -65,7 +65,6 @@ class PlacePoseGenerator:
         return f"place"
 
              
-
 class TablePoseGenerator:
     def __init__(self,
                  pose_matrix: np.ndarray,
@@ -74,16 +73,15 @@ class TablePoseGenerator:
                  hemisphere_angle=np.deg2rad(85),
                  view_step=np.deg2rad(85 / 2),
                  rotation_step=np.deg2rad(360),
-                 viz=False):
+                 ):
         self.pose_matrix = pose_matrix
         self.scale = scale
         self.xyz_step = xyz_step
         self.hemisphere_angle = hemisphere_angle
         self.view_step = view_step
         self.rotation_step = rotation_step
-        self.viz = viz
 
-    def generate(self, viz=False) -> Tuple[np.ndarray, np.ndarray]:
+    def generate(self, verbose=True) -> Tuple[np.ndarray, np.ndarray]:
         positions = table_point_generator(self.pose_matrix, self.scale, self.xyz_step)
         z_axis = self.pose_matrix[:3, 2]
         R_list = view_generator(
@@ -94,6 +92,8 @@ class TablePoseGenerator:
         )
         # orientations = np.array([matrix_to_rpy(R) for R in R_list])
         orientations = np.array(R_list)
+        if verbose:
+            print(f"Generated {positions.shape[0]} positions and {orientations.shape[0]} orientations, total {positions.shape[0] * orientations.shape[0]} poses")
         return positions, orientations
 
     @property

@@ -3,9 +3,9 @@
 # BAM
 from bam_reachability.kin_wrapper.kin_wrapper import KinWrapper
 from bam_reachability.utils.math_utils import get_matrix, matrix_to_xyzrpy, xyzrpy_to_matrix
-
+from bam_reachability.kin_wrapper.pin_kinematics import PinKinematics
 # PYTHON
-from typing import Tuple
+from typing import Tuple, Optional
 import os
 import numpy as np
 import example_robot_data
@@ -25,13 +25,10 @@ I would expect this to look like a cylinder workspace instead of a sphere!
 - you could do a 3 DOF arm, but the kinematics are slightly more complex... can do if needed later
 """
 
-class MockKinWrapper(KinWrapper):
+class ExampleRobotKinWrapper(KinWrapper):
 
-    def __init__(self, robot_name: str):
-        """
-        L1: Length of link 1 (m)
-        L2: Length of link 2 (m)
-        """
+    def __init__(self, robot_name: str, base_link: str, ik_tip_link: str, verbose: bool = False):
+
         super().__init__(robot_name)
 
         robot = example_robot_data.load(robot_name)
@@ -40,110 +37,41 @@ class MockKinWrapper(KinWrapper):
         self.collision_model = robot.collision_model
         self.visual_model = robot.visual_model
 
-    def seed_reset(self):
-        """Reset the RNG to the original seed."""
-        self.rng = np.random.default_rng(self.seed)
-
-    def IK(self, pose_matrix: np.ndarray)-> Tuple[bool, np.ndarray]:
-        xyz, rpy = matrix_to_xyzrpy(pose_matrix)
-
-        # calculate J1,J2 by assuming a 2 DOF arm
-        x = xyz[0]
-        y = xyz[1]
+        self.K = PinKinematics(self.model, base_link, ik_tip_link, verbose)
 
 
-        pose_radius = np.sqrt(x**2 + y**2)
-        max_reach = self.L1 + self.L2
+    def IK(self, pose_matrix: np.ndarray, q_seed: Optional[np.ndarray] = None)-> Tuple[bool, np.ndarray]:
+        success, joint_positions = self.K.IK(pose_matrix, q_seed)
 
-        if pose_radius >= max_reach:
-            return False, np.zeros(6)
+        return success, joint_positions
 
-        # to test out different colors, its helpful to give give different poses different reachability scores!
-        if self.random_ik_fail:
-
-            # prob is 0.0 at pose_radius = max_reach, and 1.0 at pose_radius = 0.0
-            prob = 1.0 - (pose_radius / max_reach)
-            if prob <= 0.2: # add area with 100% success    
-                pass
-            
-            elif (self.rng.random() < prob): 
-                return False, np.zeros(6)
-
-        q1, q2, success = rr_ik(self.L1, self.L2, x, y)
-
-        J1 = q1
-        J2 = q2
-        J3 = xyz[2] #Although it's strange to assign z to J3, it works just like the wrist pass through values below
-        J4 = rpy[0]
-        J5 = rpy[1]
-        J6 = rpy[2]
-
-        return success, np.array([J1, J2, J3, J4, J5, J6])
 
     def FK(self, joint_positions: np.ndarray)-> Tuple[bool, np.ndarray]:
+        success, pose_matrix = self.K.FK(joint_positions)
 
-        q1 = joint_positions[0]
-        q2 = joint_positions[1]
-        x1, y1, x2, y2 = rr_fk(self.L1, self.L2, q1, q2)
+        return success, pose_matrix
 
-        x = x2
-        y = y2
-        z = joint_positions[2] # Pass through value as well! just like wrist
-        rx = joint_positions[3]
-        ry = joint_positions[4]
-        rz = joint_positions[5]
+class UR5KinWrapper(ExampleRobotKinWrapper):
 
-        pose_matrix = xyzrpy_to_matrix([x, y, z], [rx, ry, rz])
+    def __init__(self, verbose: bool = False):
+        assert False, "UR5 Mesh does not display properly in meshcat"
+        super().__init__('ur5', 'base_link', 'tool0', verbose)
 
-        return True, pose_matrix
+class UR3KinWrapper(ExampleRobotKinWrapper):
+
+    def __init__(self, verbose: bool = False):
+        super().__init__('ur3', 'base_link', 'tool0', verbose)
+
+class UR10KinWrapper(ExampleRobotKinWrapper):
+
+    def __init__(self, verbose: bool = False):
+        super().__init__('ur10', 'base_link', 'tool0', verbose)
 
 
-# from bam_kinematics_dynamics/rr_kinematics.py
-# Nice to not have to maintain yet another set of functions...
-def rr_fk(L1, L2, q1, q2):
-        """
-        Input:
-        Output:
-        - x1
-        - y1
-        - x2
-        - y2
-        """
+class PandaKinWrapper(ExampleRobotKinWrapper):
 
-        x1, y1 = np.cos(q1) * L1, np.sin(q1) * L1
-        x2, y2 = x1 + np.cos(q1 + q2) * L2, y1 + np.sin(q1 + q2) * L2
-
-        return x1, y1, x2, y2
-
-def rr_ik(L1, L2, x, y):
-
-    d2 = x**2 + y**2
-
-    d = d2**0.5
-    if d < 1e-6:
-        return 0, 0, False # near origin
-    
-    base_angle = np.arctan2(y, x)
-
-    # C:= cos of the first angle in a triangle defined by L1 and L2
-    # the formula comes from the Law of Cosines
-
-    C = (L1**2 + d2 - L2**2) / (2*L1*d)
-
-    # Check if the target is reachable.
-    # If C > 1, it means the target is outside the workspace of the robot
-    # If C < -1, it means the target is inside the workspace, but not reachable
-    if not -1 <= C <= 1:
-        # The target is not reachable
-        return 0, 0, False
-
-    c = np.arccos(C)
-
-    # B:= cos of the second angle
-    B = (L1**2 + L2**2 - d2) / (2*L1*L2)
-    b = np.arccos(B)
-
-    return base_angle+c, b-np.pi, True
+    def __init__(self, verbose: bool = False):
+        super().__init__('panda', 'panda_link0', 'panda_link7', verbose)
 
 
 
@@ -165,7 +93,11 @@ if __name__ == '__main__':
     # print("Orientation: ", orientation.shape)
     # print("Pose: ", pose.shape)
 
-    kinematics = MockKinWrapper(L1=0.5, L2=0.5, random_ik_fail=False)
+    panda = PandaKinWrapper()
+    ur3 = UR3KinWrapper()
+    ur5 = UR5KinWrapper()
+
+    # kinematics = ExampleRobotKinWrapper(robot_name="panda", base_link="panda_link0", ik_tip_link="panda_link7")
 
     # ik_success, ik_sol = kinematics.IK(pose)
     # fk_success, fk_sol = kinematics.FK(ik_sol)

@@ -47,7 +47,8 @@ class MeshcatClient():
             self.viz.initViewer(open=True)
         else:
             print(f"Attemping to connect to Meshcat on: {zmq_url}") 
-            self.viz.initViewer(zmq_url=zmq_url) # cli: meshcat-server
+            self.viz.initViewer(zmq_url=zmq_url) # cli: 
+            
             print(f"Connected on: {zmq_url}")
 
         self.robot_prefix = None
@@ -169,14 +170,23 @@ class MeshcatClient():
 
 def main():
 
+    # "ur3": UR5Loader,
+    # "ur3_gripper": UR3GripperLoader,
+    # "ur3_limited": UR3LimitedLoader,
+    # "ur5": UR5Loader,
+    # "ur5_gripper": UR5GripperLoader,
+    # "ur5_limited": UR5LimitedLoader,
+    # "ur10": UR10Loader,
+    # "ur10_limited": UR10LimitedLoader,
+
     import example_robot_data
 
-    robot = example_robot_data.load("panda")
+    robot = example_robot_data.load("ur10")
     model = robot.model
     collision_model = robot.collision_model
     visual_model = robot.visual_model
 
-    # meshcat_client = MeshcatClient(model, collision_model, visual_model, "tcp://127.0.0.1:6000")
+    # meshcat_client = MeshcatClient(model, collision_model, visual_model, "tcp://127.0.0.1:6002")
     meshcat_client = MeshcatClient(model, collision_model, visual_model)
 
     meshcat_client.display(np.zeros(model.nq))

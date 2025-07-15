@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from bam_reachability.visualizer import O3DMapViewer, colorize_map
+from bam_reachability.visualizer import Open3DMapViewer, colorize_map
 from bam_reachability.reachability_map import ReachabilityMap
 
 
@@ -16,6 +16,6 @@ print("Map: ", len(map.ik_map))
 points, colors = colorize_map(map, histogram=True)
 print(points.shape, colors.shape)
 step = 0.1
-slicer = O3DMapViewer(points, step, colors, hide_alpha=False)
+slicer = Open3DMapViewer(points, step, colors, hide_alpha=False)
 
 slicer.run()

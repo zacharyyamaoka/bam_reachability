@@ -1,3 +1,3 @@
-from bam_reachability.visualization.o3d_map_viewer import O3DMapViewer
-# from bam_reachability.visualization.colorize_map import colorize_map, colorize_inconsistency
+from bam_reachability.visualization.open3d_map_viewer import Open3DMapViewer
+from bam_reachability.visualization.colorize_map import colorize_reachability, colorize_inconsistency
 from bam_reachability.visualization.meshcat_map_viewer import MeshcatMapViewer

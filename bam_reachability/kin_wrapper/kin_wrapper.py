@@ -3,7 +3,7 @@
 
 # PYTHON
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuple, Optional
 import os
 import numpy as np
 
@@ -14,7 +14,7 @@ class KinWrapper(ABC):
         self.name = name
 
     @abstractmethod
-    def IK(self, pose_matrix: np.ndarray)-> Tuple[bool, np.ndarray]:
+    def IK(self, pose_matrix: np.ndarray, q_seed: Optional[np.ndarray] = None)-> Tuple[bool, np.ndarray]:
 
         assert pose_matrix.shape == (4, 4), f"Expected pose to be a 4x4 matrix, got shape {pose_matrix.shape}"
         return False, np.zeros((6,))

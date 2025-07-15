@@ -4,12 +4,10 @@ from bam_reachability.generators import TablePoseGenerator, PlacePoseGenerator
 from bam_reachability.utils.math_utils import get_matrix
 
 from bam_reachability.reachability_map import ReachabilityMap, make_map_path
-from bam_reachability.kin_wrapper import MockKinWrapper
-
+from bam_reachability.kin_wrapper import MockKinWrapper, PandaKinWrapper, URKinWrapper
 from bam_reachability.reachability_map import ReachabilityMap
-from bam_reachability.visualizer.aligned_slicer import O3DMapViewer
-from bam_reachability.visualizer.colorize_map import colorize_reachability, colorize_inconsistency
-
+from bam_reachability.visualization.open3d_map_viewer import Open3DMapViewer
+from bam_reachability.visualization.colorize_map import colorize_reachability, colorize_inconsistency
 
 # PYTHON
 import time
@@ -39,8 +37,8 @@ print("Positions: ", positions.shape)
 print("Orientations: ", orientations.shape)
 
 # 2. Create IK/FK functions
-K = MockKinWrapper(L1=0.25, L2=0.25)
-
+# K = MockKinWrapper(L1=0.25, L2=0.25)
+K = PandaKinWrapper()
 
 # 3. Create Map and save result
 map = ReachabilityMap(positions, orientations, K.IK, K.FK)
@@ -48,8 +46,8 @@ map.calculate_ik_fk_map()
 
 
 colors = colorize_reachability(map, show_histogram=True)
-O3DMapViewer(map.positions, colors=colors, hide_alpha=False).run()
-O3DMapViewer(map.positions, colors=colors, hide_alpha=True).run()
+Open3DMapViewer(map.positions, colors=colors, hide_alpha=False).run()
+Open3DMapViewer(map.positions, colors=colors, hide_alpha=True).run()
 
 inconsistency_colors = colorize_inconsistency(map, show_histogram=True)
-O3DMapViewer(map.positions, colors=inconsistency_colors).run()
+Open3DMapViewer(map.positions, colors=inconsistency_colors).run()

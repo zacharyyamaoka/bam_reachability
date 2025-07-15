@@ -56,7 +56,7 @@ def orthogonal_vector(v):
     """Find any unit vector orthogonal to v"""
     # Pick a vector not collinear with v
 
-    # use x axis [1, 0, 0], unless its close, then use y axis [0, 1, 0]
+    # use x axis [1, 0, 0] for cross product, unless its close, then use y axis [0, 1, 0]
 
     if np.allclose(np.abs(v), [1, 0, 0]):
         other = np.array([0, 1, 0])
@@ -64,6 +64,17 @@ def orthogonal_vector(v):
         other = np.array([1, 0, 0])
 
     return normalize(np.cross(v, other))
+
+def orthogonal_to_two_vectors(v1, v2):
+    """Find a vector orthogonal to two given vectors"""
+    v = np.cross(v1, v2)
+    norm_v = np.linalg.norm(v)
+    if norm_v > 1e-8:
+        return v / norm_v
+
+    else:
+        # Fallback if v1 and v2 are (nearly) colinear
+        return orthogonal_vector(v1)
 
 def generate_orthonormal_vectors(axis, angle_step_rad, start_vector=None):
     """
@@ -176,7 +187,9 @@ def view_generator(inital_view=[0, 0, 1], hemisphere_angle=np.deg2rad(40), view_
     R_list = []
 
     for z in z_vectors:
-        x_list = generate_orthonormal_vectors(z, rotation_step)
+        start_vector = None
+        start_vector = orthogonal_to_two_vectors(z, inital_view)
+        x_list = generate_orthonormal_vectors(z, rotation_step, start_vector)
         for x in x_list:
             y = np.cross(z, x)
             R = np.column_stack([x, y, z])  # 3x3 rotation matrix
@@ -213,13 +226,13 @@ def visualize_vectors(vectors, scale=0.2):
     o3d.visualization.draw_geometries(geometries)
 
 
-def visualize_frames(rotations, scale=0.1, only_z=False):
+def visualize_frames(R_list, scale=0.1, only_z=False):
     """
     Visualize a list of coordinate frames or just their Z axes using Open3D.
 
     Parameters
     ----------
-    rotations : List[np.ndarray] or np.ndarray (3, 3) or (N, 3, 3)
+    R_list : List[np.ndarray] or np.ndarray (3, 3) or (N, 3, 3)
         List of 3x3 rotation matrices or a single one.
     scale : float
         Scale of the coordinate frames or arrows.
@@ -229,15 +242,15 @@ def visualize_frames(rotations, scale=0.1, only_z=False):
     geometries = []
 
     # Normalize input to a list of 3x3 matrices
-    if isinstance(rotations, np.ndarray):
-        if rotations.ndim == 2:
-            rotations = [rotations]
-        elif rotations.ndim == 3:
-            rotations = list(rotations)
-    elif not isinstance(rotations, list):
-        rotations = [rotations]
+    if isinstance(R_list, np.ndarray):
+        if R_list.ndim == 2:
+            R_list = [R_list]
+        elif R_list.ndim == 3:
+            R_list = list(R_list)
+    elif not isinstance(R_list, list):
+        R_list = [R_list]
 
-    for R_frame in rotations:
+    for R in R_list:
         if only_z:
             arrow = o3d.geometry.TriangleMesh.create_arrow(
                 cylinder_radius=0.005,
@@ -249,17 +262,17 @@ def visualize_frames(rotations, scale=0.1, only_z=False):
                 cone_split=1
             )
             # Rotate the arrow directly using the full rotation matrix
-            arrow.rotate(R_frame, center=(0, 0, 0))
-            arrow.translate(R_frame[:, 2] * scale * 0.1)  # small offset along Z
+            arrow.rotate(R, center=(0, 0, 0))
+            arrow.translate(R[:, 2] * scale * 0.1)  # small offset along Z
             arrow.paint_uniform_color([0.2, 0.6, 1.0])
             geometries.append(arrow)
         else:
             frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=scale)
-            frame.rotate(R_frame, center=(0, 0, 0))
+            frame.rotate(R, center=(0, 0, 0))
             geometries.append(frame)
 
     # Global reference frame
-    ref_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=scale * 2)
+    ref_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.1 * 2)
     geometries.append(ref_frame)
 
     o3d.visualization.draw_geometries(geometries)
@@ -292,96 +305,8 @@ def mask_vectors_by_angle(vectors, target_vector, max_angle_rad):
 
 
 if __name__ == "__main__":
-
-    # R = np.eye(3)
-    # rpy = mat2euler(R)
-    # print(rpy)  # Should be [0.0, 0.0, 0.0]
-
-    # What would give me confidence here?
-
-    #1. View Vectors
-
-    # vectors = generate_deviation_vectors(
-    #     axis=(0, 0, -1),  # z-axis (this is what you want to table picking)
-    #     max_angle_rad=np.deg2rad(90),  # 90 degree cone
-    #     step_angle_rad=np.deg2rad(30)
-    # )
-    # visualize_vectors(vectors)
-    # print(np.round(vectors,3)) # check no repeats
-    # print(vectors.shape)
+    pass
 
 
-    vectors = generate_deviation_vectors(
-        axis=(0, 0, -1),  # z-axis (this is what you want to table picking)
-        max_angle_rad=np.deg2rad(0),  # 90 degree cone
-        step_angle_rad=np.deg2rad(30)
-    )
-    assert len(vectors) == 1 
 
-    vectors = generate_deviation_vectors(
-        axis=(0, 0, -1),  # z-axis (this is what you want to table picking)
-        max_angle_rad=np.deg2rad(0),  # 90 degree cone
-        step_angle_rad=np.deg2rad(0) # 0 deg step...?
-    )
-    assert len(vectors) == 1 
 
-    #2. Orthogonal Vectors (aka on axis rotation)
-
-    # vectors = generate_orthonormal_vectors(axis=(0,0,-1), angle_step_rad=np.deg2rad(45))
-    # assert vectors.shape[0] == 8
-
-    # vectors = generate_orthonormal_vectors(axis=(0,0,-1), angle_step_rad=np.deg2rad(90))
-    # assert vectors.shape[0] == 4
-
-    # vectors = generate_orthonormal_vectors(axis=(0,0,-1), angle_step_rad=np.deg2rad(180))
-    # assert vectors.shape[0] == 2
-
-    # vectors = generate_orthonormal_vectors(axis=(0,0,-1), angle_step_rad=np.deg2rad(360))
-    # assert vectors.shape[0] == 1
-
-    # # Changing the start vector, you can see the spokes on the tire rotate to align
-    # vectors = generate_orthonormal_vectors(
-    #     axis = (0, 0, -1),
-    #     angle_step_rad = np.deg2rad(60),
-    #     start_vector=None)
-    
-    # visualize_vectors(vectors)
-    # print(np.round(vectors,3))
-    # print(vectors.shape)
-
-    # vectors = generate_orthonormal_vectors(
-    # axis = (0, 0, -1),
-    # angle_step_rad = np.deg2rad(60),
-    # start_vector=(1,0,0))
-    
-    # visualize_vectors(vectors)
-    # print(np.round(vectors,3))
-    # print(vectors.shape)
-
-    #3. Combine both to generate views
-
-    # Very cool you will see it first go straight up
-    # and then it goes 45 degs down, and spins around
-    # then it goes another 45 down to 90, and spins around 
-    # R_list = view_generator(
-    #     inital_view=[0, 0, 1],
-    #     hemisphere_angle=np.deg2rad(90),
-    #     view_step=np.deg2rad(45),
-    #     rotation_step=np.deg2rad(360)
-    # )
-    # print("Num R: ", len(R_list))
-    # print("Press [esc] inside viewer to step through views")
-    # print("Large frame is staionary world frame")
-    # for R in R_list:
-    #     visualize_frames(R, scale=0.05)
-
-    # # Now in axis rotation is set to 45, you will see it stay on a certain z view for 8 steps
-    # # and the x and y axis will change. Keep your eyes on the blue z axis
-    # R_list = view_generator(
-    #     inital_view=[0, 0, 1],
-    #     hemisphere_angle=np.deg2rad(90),
-    #     view_step=np.deg2rad(45),
-    #     rotation_step=np.deg2rad(45)
-    # )
-    # for R in R_list:
-    #     visualize_frames(R, scale=0.05)

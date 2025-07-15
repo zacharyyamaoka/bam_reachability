@@ -178,14 +178,14 @@ class MeshcatMapViewer:
                 if self.inconsistent_mode:
                     self.jump_to_nearest_inconsistent(forward=True)
                 else:
-                    self.pos_index = (self.pos_index + 1) % self.reach_map.n_frames
+                    self.pos_index = (self.pos_index + 1) % self.reach_map.n_positions
                     # self.orient_index = 0
                     self.display_current_pose()
             elif k == 'down':
                 if self.inconsistent_mode:
                     self.jump_to_nearest_inconsistent(forward=False)
                 else:
-                    self.pos_index = (self.pos_index - 1) % self.reach_map.n_frames
+                    self.pos_index = (self.pos_index - 1) % self.reach_map.n_positions
                     # self.orient_index = 0
                     self.display_current_pose()
             elif k == 'right':
@@ -210,25 +210,22 @@ class MeshcatMapViewer:
 
 if __name__ == "__main__":
 
+    # UR is the most representative robot for this....
     import example_robot_data
+    from bam_reachability.reachability_map import ReachabilityMap
+    from bam_reachability.visualization.colorize_map import colorize_reachability, colorize_inconsistency
 
-    robot = example_robot_data.load("panda")
+    robot = example_robot_data.load("ur10")
     model = robot.model
     collision_model = robot.collision_model
     visual_model = robot.visual_model
 
-    from bam_reachability.reachability_map import ReachabilityMap
-    from bam_reachability.visualization.colorize_map import colorize_reachability, colorize_inconsistency
 
-    file_path ="/home/bam/python_ws/bam_reachability/maps/ur/ur_offset_table_1.0x0.5x0.2_0.10_85x42x360_map_15_jun_2025.pkl"
-
-
-    # Load reachability map
+    file_path ="/home/bam/python_ws/bam_reachability/maps/ur/ur10_table_1.2x1.2x1.0_0.20_90x45x360_map_14_jul_2025.pkl"
     map = ReachabilityMap.load(file_path)
 
-    # Get colorized point cloud
     colors = colorize_reachability(map, show_histogram=True)
-    # points, colors = colorize_inconsistency(map)
+    # colors = colorize_inconsistency(map)
 
 
     viewer = MeshcatMapViewer(map, colors, model, collision_model, visual_model)

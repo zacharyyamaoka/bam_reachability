@@ -1,5 +1,5 @@
 from bam_reachability.reachability_map import ReachabilityMap
-from bam_reachability.visualization.o3d_map_viewer import O3DMapViewer
+from bam_reachability.visualization.o3d_map_viewer import Open3DMapViewer
 from bam_reachability.visualization.colorize_map import bin_values, plot_bins, colorize_reachability
 import numpy as np
 
@@ -34,7 +34,7 @@ def test_colorize_reachability():
 
     assert colors.shape == (len(map.positions), 4)
 
-    O3DMapViewer(map.positions, colors=colors).run()
+    Open3DMapViewer(map.positions, colors=colors).run()
 
 if __name__ == "__main__":
     # test_bin_scores()

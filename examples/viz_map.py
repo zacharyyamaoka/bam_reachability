@@ -1,5 +1,5 @@
 from bam_reachability.reachability_map import ReachabilityMap
-from bam_reachability.visualizer.aligned_slicer import O3DMapViewer
+from bam_reachability.visualizer.aligned_slicer import Open3DMapViewer
 from bam_reachability.visualizer.colorize_map import colorize_reachability
 
 
@@ -8,4 +8,4 @@ map = ReachabilityMap.load(map_path)
 colors = colorize_reachability(map, show_histogram=False)
 
 
-O3DMapViewer(map.positions, colors=colors).run()
+Open3DMapViewer(map.positions, colors=colors).run()

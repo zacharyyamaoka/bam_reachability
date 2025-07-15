@@ -1,0 +1,376 @@
+## All the Avaliable Params
+MODEL
+ **** __module__: str(object='') -> str
+str(bytes_or_buffer[, encoding[, errors]]) -> str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer
+that will be decoded using the given encoding and error handler.
+Otherwise, returns the result of object.__str__() (if defined)
+or repr(object).
+encoding defaults to sys.getdefaultencoding().
+errors defaults to 'strict'.
+ **** __doc__: str(object='') -> str
+str(bytes_or_buffer[, encoding[, errors]]) -> str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer
+that will be decoded using the given encoding and error handler.
+Otherwise, returns the result of object.__str__() (if defined)
+or repr(object).
+encoding defaults to sys.getdefaultencoding().
+errors defaults to 'strict'.
+ **** __reduce__: None
+ **** __init__: 
+__init__( (object)self) -> None :
+    Default constructor. Constructs an empty model.
+
+__init__( (object)self, (Model)clone) -> None :
+    Copy constructor
+
+__init__( (object)arg1, (Model)clone) -> object :
+    Copy constructor from pinocchio.pinocchio_pywrap_default.Model -> pinocchio.pinocchio_pywrap_default.Model
+
+__init__( (object)arg1, (Model)clone) -> object :
+    Copy constructor from pinocchio.pinocchio_pywrap_default.Model -> pinocchio.pinocchio_pywrap_default.Model
+ **** nq: Dimension of the configuration vector representation.
+ **** nv: Dimension of the velocity vector space.
+ **** njoints: Number of joints.
+ **** nbodies: Number of bodies.
+ **** nframes: Number of frames.
+ **** inertias: Vector of spatial inertias supported by each joint.
+ **** jointPlacements: Vector of joint placements: placement of a joint *i* wrt its parent joint frame.
+ **** joints: Vector of joint models.
+ **** idx_qs: Vector of starting index of the *i*th  joint in the configuration space.
+ **** nqs: Vector of dimension of the  joint configuration subspace.
+ **** idx_vs: Starting index of the *i*th joint in the tangent configuration space.
+ **** nvs: Dimension of the *i*th joint tangent subspace.
+ **** parents: Vector of parent joint indexes. The parent of joint *i*, denoted *li*, corresponds to li==parents[i].
+ **** children: Vector of children index. Chidren of the *i*th joint, denoted *mu(i)* corresponds to the set (i==parents[k] for k in mu(i)).
+ **** names: Name of the joints.
+ **** name: Name of the model.
+ **** referenceConfigurations: Map of reference configurations, indexed by user given names.
+ https://github.com/stack-of-tasks/pinocchio/discussions/2435
+ Don't seem to be implemented right now. I can do it after the fact! with a custom compensation
+ **** armature: Armature vector.
+ **** rotorInertia: Vector of rotor inertia parameters.
+ **** rotorGearRatio: Vector of rotor gear ratio parameters.
+ **** friction: Vector of joint friction parameters.
+ **** damping: Vector of joint damping parameters.
+ **** effortLimit: Joint max effort.
+ **** velocityLimit: Joint max velocity.
+ **** lowerPositionLimit: Limit for joint lower position.
+ **** upperPositionLimit: Limit for joint upper position.
+ **** frames: Vector of frames contained in the model.
+ **** supports: Vector of supports. supports[j] corresponds to the list of joints on the path between
+the current *j* to the root of the kinematic tree.
+ **** subtrees: Vector of subtrees. subtree[j] corresponds to the subtree supported by the joint j.
+ **** gravity: Motion vector corresponding to the gravity field expressed in the world Frame.
+ **** addJoint: 
+addJoint( (Model)self, (int)parent_id, (JointModel)joint_model, (SE3)joint_placement, (str)joint_name) -> int :
+    Adds a joint to the kinematic tree. The joint is defined by its placement relative to its parent joint and its name.
+
+addJoint( (Model)self, (int)parent_id, (JointModel)joint_model, (SE3)joint_placement, (str)joint_name, (numpy.ndarray)max_effort, (numpy.ndarray)max_velocity, (numpy.ndarray)min_config, (numpy.ndarray)max_config) -> int :
+    Adds a joint to the kinematic tree with given bounds. The joint is defined by its placement relative to its parent joint and its name.This signature also takes as input effort, velocity limits as well as the bounds on the joint configuration.
+
+addJoint( (Model)self, (int)parent_id, (JointModel)joint_model, (SE3)joint_placement, (str)joint_name, (numpy.ndarray)max_effort, (numpy.ndarray)max_velocity, (numpy.ndarray)min_config, (numpy.ndarray)max_config, (numpy.ndarray)friction, (numpy.ndarray)damping) -> int :
+    Adds a joint to the kinematic tree with given bounds. The joint is defined by its placement relative to its parent joint and its name.
+    This signature also takes as input effort, velocity limits as well as the bounds on the joint configuration.
+    The user should also provide the friction and damping related to the joint.
+ **** addJointFrame: 
+addJointFrame( (Model)self, (int)joint_id [, (int)frame_id=0]) -> int :
+    Add the joint provided by its joint_id as a frame to the frame tree.
+    The frame_id may be optionally provided.
+ **** appendBodyToJoint: 
+appendBodyToJoint( (Model)self, (int)joint_id, (Inertia)body_inertia, (SE3)body_placement) -> None :
+    Appends a body to the joint given by its index. The body is defined by its inertia, its relative placement regarding to the joint and its name.
+ **** addBodyFrame: 
+addBodyFrame( (Model)self, (str)body_name, (int)parentJoint, (SE3)body_placement, (int)previous_frame) -> int :
+    add a body to the frame tree
+ **** getBodyId: 
+getBodyId( (Model)self, (str)name) -> int :
+    Return the index of a frame of type BODY given by its name
+ **** existBodyName: 
+existBodyName( (Model)self, (str)name) -> bool :
+    Check if a frame of type BODY exists, given its name
+ **** getJointId: 
+getJointId( (Model)self, (str)name) -> int :
+    Return the index of a joint given by its name
+ **** existJointName: 
+existJointName( (Model)self, (str)name) -> bool :
+    Check if a joint given by its name exists
+ **** getFrameId: 
+getFrameId( (Model)self, (str)name [, (FrameType)type=pinocchio.pinocchio_pywrap_default.FrameType(31)]) -> int :
+    Returns the index of the frame given by its name and its type.If the frame is not in the frames vector, it returns the current size of the frames vector.
+ **** existFrame: 
+existFrame( (Model)self, (str)name [, (FrameType)type=pinocchio.pinocchio_pywrap_default.FrameType(31)]) -> bool :
+    Returns true if the frame given by its name exists inside the Model with the given type.
+ **** addFrame: 
+addFrame( (Model)self, (Frame)frame [, (bool)append_inertia=True]) -> int :
+    Add a frame to the vector of frames. If append_inertia set to True, the inertia value contained in frame will be added to the inertia supported by the parent joint.
+ **** createData: 
+createData( (Model)self) -> Data :
+    Create a Data object for the given model.
+ **** check: 
+check( (Model)self, (Data)data) -> bool :
+    Check consistency of data wrt model.
+ **** hasConfigurationLimit: 
+hasConfigurationLimit( (Model)self) -> StdVec_Bool :
+    Returns list of boolean if joints have configuration limit.
+ **** hasConfigurationLimitInTangent: 
+hasConfigurationLimitInTangent( (Model)self) -> StdVec_Bool :
+    Returns list of boolean if joints have configuration limit in tangent space  .
+ **** __eq__: 
+__eq__( (Model)arg1, (Model)arg2) -> object
+ **** __ne__: 
+__ne__( (Model)arg1, (Model)arg2) -> object
+ **** gravity981: None
+ **** cast: 
+cast( (Model)arg1) -> Model :
+    Returns a cast of *this.
+ **** saveToText: 
+saveToText( (Model)self, (str)filename) -> None :
+    Saves *this inside a text file.
+ **** loadFromText: 
+loadFromText( (Model)self, (str)filename) -> None :
+    Loads *this from a text file.
+ **** saveToString: 
+saveToString( (Model)self) -> str :
+    Parses the current object to a string.
+ **** loadFromString: 
+loadFromString( (Model)self, (str)string) -> None :
+    Parses from the input string the content of the current object.
+ **** saveToXML: 
+saveToXML( (Model)arg1, (str)filename, (str)tag_name) -> None :
+    Saves *this inside a XML file.
+ **** loadFromXML: 
+loadFromXML( (Model)self, (str)filename, (str)tag_name) -> None :
+    Loads *this from a XML file.
+ **** saveToBinary: 
+saveToBinary( (Model)self, (str)filename) -> None :
+    Saves *this inside a binary file.
+
+saveToBinary( (Model)self, (pinocchio.pinocchio_pywrap_default.serialization.StreamBuffer)buffer) -> None :
+    Saves *this inside a binary buffer.
+
+saveToBinary( (Model)self, (pinocchio.pinocchio_pywrap_default.serialization.StaticBuffer)buffer) -> None :
+    Saves *this inside a static binary buffer.
+ **** loadFromBinary: 
+loadFromBinary( (Model)self, (str)filename) -> None :
+    Loads *this from a binary file.
+
+loadFromBinary( (Model)self, (pinocchio.pinocchio_pywrap_default.serialization.StreamBuffer)buffer) -> None :
+    Loads *this from a binary buffer.
+
+loadFromBinary( (Model)self, (pinocchio.pinocchio_pywrap_default.serialization.StaticBuffer)buffer) -> None :
+    Loads *this from a static binary buffer.
+ **** __str__: 
+__str__( (Model)arg1) -> object
+ **** __repr__: 
+__repr__( (Model)arg1) -> object
+ **** copy: 
+copy( (Model)self) -> Model :
+    Returns a copy of *this.
+ **** __copy__: 
+__copy__( (Model)self) -> Model :
+    Returns a copy of *this.
+ **** __deepcopy__: 
+__deepcopy__( (Model)self, (dict)memo) -> Model :
+    Returns a deep copy of *this.
+ **** __safe_for_unpickling__: bool(x) -> bool
+
+Returns True when the argument x is true, False otherwise.
+The builtins True and False are the only two instances of the class bool.
+The class bool is a subclass of the class int, and cannot be subclassed.
+ **** __getstate_manages_dict__: bool(x) -> bool
+
+Returns True when the argument x is true, False otherwise.
+The builtins True and False are the only two instances of the class bool.
+The class bool is a subclass of the class int, and cannot be subclassed.
+ **** __getinitargs__: 
+__getinitargs__( (Model)arg1) -> tuple
+ **** __getstate__: 
+__getstate__( (Model)arg1) -> tuple
+ **** __setstate__: 
+__setstate__( (Model)arg1, (tuple)arg2) -> None
+------------------------------
+
+
+------------------------------
+DATA
+ **** __module__: str(object='') -> str
+str(bytes_or_buffer[, encoding[, errors]]) -> str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer
+that will be decoded using the given encoding and error handler.
+Otherwise, returns the result of object.__str__() (if defined)
+or repr(object).
+encoding defaults to sys.getdefaultencoding().
+errors defaults to 'strict'.
+ **** __doc__: str(object='') -> str
+str(bytes_or_buffer[, encoding[, errors]]) -> str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer
+that will be decoded using the given encoding and error handler.
+Otherwise, returns the result of object.__str__() (if defined)
+or repr(object).
+encoding defaults to sys.getdefaultencoding().
+errors defaults to 'strict'.
+ **** __reduce__: None
+ **** __init__: 
+__init__( (object)self) -> None :
+    Default constructor.
+
+__init__( (object)self, (Model)model) -> None :
+    Constructs a data structure from a given model.
+ **** joints: Vector of JointData associated to each JointModel stored in the related model.
+ **** a: Vector of joint accelerations expressed in the local frame of the joint.
+ **** oa: Joint spatial acceleration expressed at the origin of the world frame.
+ **** a_gf: Joint spatial acceleration containing also the contribution of the gravity acceleration
+ **** oa_gf: Joint spatial acceleration containing also the contribution of the gravity acceleration, but expressed at the origin of the world frame.
+ **** v: Vector of joint velocities expressed in the local frame of the joint.
+ **** ov: Vector of joint velocities expressed at the origin of the world.
+ **** f: Vector of body forces expressed in the local frame of the joint.
+ **** of: Vector of body forces expressed at the origin of the world.
+ **** of_augmented: Vector of body forces expressed at the origin of the world, in the context of lagrangian formulation
+ **** h: Vector of spatial momenta expressed in the local frame of the joint.
+ **** oh: Vector of spatial momenta expressed at the origin of the world.
+ **** oMi: Body absolute placement (wrt world)
+ **** oMf: frames absolute placement (wrt world)
+ **** liMi: Body relative placement (wrt parent)
+ **** tau: Joint torques (output of RNEA)
+ **** nle: Non Linear Effects (output of nle algorithm)
+ **** ddq: Joint accelerations (output of ABA)
+ **** Ycrb: Inertia of the sub-tree composit rigid body
+ **** oYcrb: Composite Rigid Body Inertia of the sub-tree expressed in the WORLD coordinate system.
+ **** Yaba: Articulated Body Inertia of the sub-tree
+ **** oYaba: Articulated Body Inertia of the sub-tree expressed in the WORLD coordinate system.
+ **** oL: Acceleration propagator.
+ **** oK: Inverse articulated inertia.
+ **** M: The joint space inertia matrix
+ **** Minv: The inverse of the joint space inertia matrix
+ **** C: The Coriolis C(q,v) matrix such that the Coriolis effects are given by c(q,v) = C(q,v)v
+ **** g: Vector of generalized gravity (dim model.nv).
+ **** Fcrb: Spatial forces set, used in CRBA
+ **** lastChild: Index of the last child (for CRBA)
+ **** nvSubtree: Dimension of the subtree motion space (for CRBA)
+ **** U: Joint Inertia square root (upper triangle)
+ **** D: Diagonal of UDUT inertia decomposition
+ **** parents_fromRow: First previous non-zero row in M (used in Cholesky)
+ **** nvSubtree_fromRow: Subtree of the current row index (used in Cholesky)
+ **** J: Jacobian of joint placement
+ **** dJ: Time variation of the Jacobian of joint placement (data.J).
+ **** iMf: Body placement wrt to algorithm end effector.
+ **** Ivx: Right variation of the inertia matrix.
+ **** vxI: Left variation of the inertia matrix.
+ **** B: Combined variations of the inertia matrix consistent with Christoffel symbols.
+ **** Ag: Centroidal matrix which maps from joint velocity to the centroidal momentum.
+ **** dAg: Time derivative of the centroidal momentum matrix Ag.
+ **** hg: Centroidal momentum (expressed in the frame centered at the CoM and aligned with the world frame).
+ **** dhg: Centroidal momentum time derivative (expressed in the frame centered at the CoM and aligned with the world frame).
+ **** Ig: Centroidal Composite Rigid Body Inertia.
+ **** com: CoM position of the subtree starting at joint index i.
+ **** vcom: CoM velocity of the subtree starting at joint index i.
+ **** acom: CoM acceleration of the subtree starting at joint index i.
+ **** mass: Mass of the subtree starting at joint index i.
+ **** Jcom: Jacobian of center of mass.
+ **** dAdq: Variation of the spatial acceleration set with respect to the joint configuration.
+ **** dAdv: Variation of the spatial acceleration set with respect to the joint velocity.
+ **** dHdq: Variation of the spatial momenta set with respect to the joint configuration.
+ **** dFdq: Variation of the force set with respect to the joint configuration.
+ **** dFdv: Variation of the force set with respect to the joint velocity.
+ **** dFda: Variation of the force set with respect to the joint acceleration.
+ **** dtau_dq: Partial derivative of the joint torque vector with respect to the joint configuration.
+ **** dtau_dv: Partial derivative of the joint torque vector with respect to the joint velocity.
+ **** ddq_dq: Partial derivative of the joint acceleration vector with respect to the joint configuration.
+ **** ddq_dv: Partial derivative of the joint acceleration vector with respect to the joint velocity.
+ **** ddq_dtau: Partial derivative of the joint acceleration vector with respect to the joint torque.
+ **** dvc_dq: Partial derivative of the constraint velocity vector with respect to the joint configuration.
+ **** dac_dq: Partial derivative of the contact acceleration vector with respect to the joint configuration.
+ **** dac_dv: Partial derivative of the contact acceleration vector vector with respect to the joint velocity.
+ **** dac_da: Partial derivative of the contact acceleration vector vector with respect to the joint acceleration.
+ **** osim: Operational space inertia matrix.
+ **** dlambda_dq: Partial derivative of the contact force vector with respect to the joint configuration.
+ **** dlambda_dv: Partial derivative of the contact force vector with respect to the joint velocity.
+ **** dlambda_dtau: Partial derivative of the contact force vector with respect to the torque.
+ **** kinetic_energy: Kinetic energy in [J] computed by computeKineticEnergy
+ **** potential_energy: Potential energy in [J] computed by computePotentialEnergy
+ **** mechanical_energy: Mechanical energy in [J] of the system computed by computeMechanicalEnergy
+ **** lambda_c: Lagrange Multipliers linked to contact forces
+ **** impulse_c: Lagrange Multipliers linked to contact impulses
+ **** contact_chol: Contact Cholesky decomposition.
+ **** primal_dual_contact_solution: Right hand side vector when solving the contact dynamics KKT problem.
+ **** lambda_c_prox: Proximal Lagrange Multipliers used in the computation of the Forward Dynamics computations.
+ **** primal_rhs_contact: Primal RHS in contact dynamic equations.
+ **** dq_after: Generalized velocity after the impact.
+ **** staticRegressor: Static regressor.
+ **** jointTorqueRegressor: Joint torque regressor.
+ **** kineticEnergyRegressor: Kinetic energy regressor.
+ **** potentialEnergyRegressor: Potential energy regressor.
+ **** __eq__: 
+__eq__( (Data)arg1, (Data)arg2) -> object
+ **** __ne__: 
+__ne__( (Data)arg1, (Data)arg2) -> object
+ **** copy: 
+copy( (Data)self) -> Data :
+    Returns a copy of *this.
+ **** __copy__: 
+__copy__( (Data)self) -> Data :
+    Returns a copy of *this.
+ **** __deepcopy__: 
+__deepcopy__( (Data)self, (dict)memo) -> Data :
+    Returns a deep copy of *this.
+ **** saveToText: 
+saveToText( (Data)self, (str)filename) -> None :
+    Saves *this inside a text file.
+ **** loadFromText: 
+loadFromText( (Data)self, (str)filename) -> None :
+    Loads *this from a text file.
+ **** saveToString: 
+saveToString( (Data)self) -> str :
+    Parses the current object to a string.
+ **** loadFromString: 
+loadFromString( (Data)self, (str)string) -> None :
+    Parses from the input string the content of the current object.
+ **** saveToXML: 
+saveToXML( (Data)arg1, (str)filename, (str)tag_name) -> None :
+    Saves *this inside a XML file.
+ **** loadFromXML: 
+loadFromXML( (Data)self, (str)filename, (str)tag_name) -> None :
+    Loads *this from a XML file.
+ **** saveToBinary: 
+saveToBinary( (Data)self, (str)filename) -> None :
+    Saves *this inside a binary file.
+
+saveToBinary( (Data)self, (pinocchio.pinocchio_pywrap_default.serialization.StreamBuffer)buffer) -> None :
+    Saves *this inside a binary buffer.
+
+saveToBinary( (Data)self, (pinocchio.pinocchio_pywrap_default.serialization.StaticBuffer)buffer) -> None :
+    Saves *this inside a static binary buffer.
+ **** loadFromBinary: 
+loadFromBinary( (Data)self, (str)filename) -> None :
+    Loads *this from a binary file.
+
+loadFromBinary( (Data)self, (pinocchio.pinocchio_pywrap_default.serialization.StreamBuffer)buffer) -> None :
+    Loads *this from a binary buffer.
+
+loadFromBinary( (Data)self, (pinocchio.pinocchio_pywrap_default.serialization.StaticBuffer)buffer) -> None :
+    Loads *this from a static binary buffer.
+ **** __safe_for_unpickling__: bool(x) -> bool
+
+Returns True when the argument x is true, False otherwise.
+The builtins True and False are the only two instances of the class bool.
+The class bool is a subclass of the class int, and cannot be subclassed.
+ **** __getstate_manages_dict__: bool(x) -> bool
+
+Returns True when the argument x is true, False otherwise.
+The builtins True and False are the only two instances of the class bool.
+The class bool is a subclass of the class int, and cannot be subclassed.
+ **** __getinitargs__: 
+__getinitargs__( (Data)arg1) -> tuple
+ **** __getstate__: 
+__getstate__( (Data)arg1) -> tuple
+ **** __setstate__: 
+__setstate__( (Data)arg1, (tuple)arg2) -> None
