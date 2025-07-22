@@ -116,7 +116,7 @@ class ReachabilityWorkspace():
         self.map = full_hemisphere_map
         assert self.map.same_orientations
 
-        self.four_dof_view = four_dof_view
+        self.four_dof_view = four_dof_view # in robot base_link frame
         assert self.four_dof_view.shape == (3,) 
 
         # self.workspace_info: list[WorkspaceInfo] = []

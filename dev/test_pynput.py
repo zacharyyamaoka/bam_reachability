@@ -15,6 +15,8 @@ def run():
         except AttributeError:
             k = key.name  # Special key like 'space', 'left', etc.
 
+        print("Key pressed: ", k)
+
         if k == ' ':
             print("[Space] → Random frame")
         elif k in ['right', 'up']:
@@ -25,7 +27,7 @@ def run():
             print("[+] → Increase point size")
         elif k in ['-', '_']:
             print("[-] → Decrease point size")
-        elif k in ['q', 'Q', 'esc']:
+        elif k in ['q', 'Q', 'esc'    ]:
             print("Exiting viewer...")
             return False  # Stop listener
 

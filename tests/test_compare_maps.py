@@ -18,10 +18,9 @@ def test_compare_maps():
     hemisphere_angle = np.deg2rad(45),
     view_step = np.deg2rad(45),
     rotation_step = np.deg2rad(180),
-    viz = False,
     )
 
-    positions, orientations = generator.generate(viz=False)
+    positions, orientations = generator.generate(verbose=False)
 
     # 2. Create IK/FK functions
     K1 = MockKinWrapper(L1=0.3, L2=0.3, seed=1, random_ik_fail=True)
@@ -51,3 +50,4 @@ def test_compare_maps():
 
 if __name__ == "__main__":
     test_compare_maps()
+    print("All tests passed")

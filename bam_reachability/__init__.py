@@ -1,1 +1,2 @@
 from bam_reachability.reachability_map import ReachabilityMap
+from bam_reachability.reachability_workspace import ReachabilityWorkspace

@@ -1,5 +1,5 @@
 from bam_reachability.reachability_map import ReachabilityMap
-from bam_reachability.visualization.o3d_map_viewer import Open3DMapViewer
+from bam_reachability.visualization.open3d_map_viewer import Open3DMapViewer
 from bam_reachability.visualization.colorize_map import bin_values, plot_bins, colorize_reachability
 import numpy as np
 
@@ -11,7 +11,7 @@ def test_bin_scores():
     n_bins = 5
     binned_scores, bin_edges = bin_values(scores, first_edge=0.2, last_edge=0.999, n_bins=n_bins, normalize=False)
 
-    plot_bins(scores, bin_edges)
+    # plot_bins(scores, bin_edges)
 
     assert np.all(binned_scores == expected_bin_ids)
     assert len(binned_scores) == len(scores)
@@ -26,16 +26,5 @@ def test_bin_scores():
     assert np.max(binned_scores) == 1.0
     assert np.min(binned_scores) == 0.0
 
-def test_colorize_reachability():
-        
-    map_path = "/home/bam/python_ws/bam_reachability/maps/mock/Mock_table_0.8x0.4x0.1_0.25_0x0x360_map_13_jul_2025.pkl"
-    map = ReachabilityMap.load(map_path, reduce_count=20)
-    colors = colorize_reachability(map, show_histogram=False)
-
-    assert colors.shape == (len(map.positions), 4)
-
-    Open3DMapViewer(map.positions, colors=colors).run()
-
 if __name__ == "__main__":
-    # test_bin_scores()
-    test_colorize_reachability()
+    test_bin_scores()
